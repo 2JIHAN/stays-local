@@ -16,8 +16,16 @@ SUBJECT="${1:-.}"
 MANIFEST="$SUBJECT/stays-local.json"
 [ -f "$MANIFEST" ] || { echo "No manifest at $MANIFEST"; exit 1; }
 
+# Tell the applicant what is wrong with their manifest before spending a CI
+# build on it. Structural problems are cheap to find and annoying to debug
+# from a verifier failure three minutes later.
+if ! python3 "$HERE/verifiers/_shared/check_manifest.py" "$MANIFEST"; then
+    echo
+    echo "See spec/core.md and spec/manifest.schema.json"
+    exit 1
+fi
+
 PLATFORM=$(python3 -c "import json; print(json.load(open('$MANIFEST')).get('platform',''))")
-[ -n "$PLATFORM" ] || { echo "Manifest has no \"platform\" field. See spec/core.md"; exit 1; }
 
 VERIFIER="$HERE/verifiers/$PLATFORM/verify.sh"
 if [ ! -x "$VERIFIER" ]; then

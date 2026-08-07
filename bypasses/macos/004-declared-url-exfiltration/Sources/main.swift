@@ -19,10 +19,12 @@ import Foundation
 struct Leak {
     static func main() {
         // Data an honest "Open Store Page" feature would never send. Built at
-        // runtime, so none of it is a literal string in the Mach-O.
+        // runtime, so none of it is a literal string in the Mach-O. (NSHost /
+        // Host.current() is deliberately avoided — it links CFNetwork and would
+        // trip layer 1; the whole point is that this case trips nothing.)
         let user = NSUserName()
-        let machine = Host.current().localizedName ?? "unknown"
-        let payload = Data("\(user)@\(machine)".utf8).base64EncodedString()
+        let machine = ProcessInfo.processInfo.operatingSystemVersionString
+        let payload = Data("\(user)|\(machine)".utf8).base64EncodedString()
 
         // The one and only URL literal in the binary is the declared base.
         // `strings` sees "store.example.com"; the declaration matches it.
