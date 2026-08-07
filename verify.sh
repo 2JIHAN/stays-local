@@ -136,11 +136,20 @@ if [ -n "$JSON_OUT" ]; then
     python3 - "$JSON_OUT" "$NAME" "$FAILED" "${NOTES[@]}" <<'PY'
 import json, sys
 out, name, failed, *notes = sys.argv[1:]
+# 배지에 제도의 마크(사선 그은 구름)를 함께 싣는다.
+LOGO = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14">'
+        '<g fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" '
+        'stroke-linejoin="round">'
+        '<path d="M3.6 10.2h5.6a2.3 2.3 0 0 0 .2-4.6 3.3 3.3 0 0 0-6-1.2 2.6 2.6 0 0 0-.6 5.1z"/>'
+        '<path d="M1.5 12.4 11.1 2.8"/></g></svg>')
+
 json.dump({
     "schemaVersion": 1,
     "label": "stays local",
     "message": "verified" if failed == "0" else "failed",
     "color": "0e9f6e" if failed == "0" else "e03131",
+    "labelColor": "3b4252",
+    "logoSvg": LOGO,
     "name": name,
     "spec": "v1",
     "notes": notes,
