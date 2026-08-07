@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112" role="img" aria-label="stays local — no egress, verified">
+  <title>stays local — no egress, verified</title>
+  <defs>
+    <path id="top" d="M 14,56 A 42,42 0 0 1 98,56"/>
+    <path id="bottom" d="M 18,56 A 38,38 0 0 0 94,56"/>
+  </defs>
+  <circle cx="56" cy="56" r="55" fill="#151a21"/>
+  <circle cx="56" cy="56" r="50" fill="none" stroke="#0e9f6e" stroke-width="1.5"/>
+  <circle cx="56" cy="56" r="46.5" fill="none" stroke="#0e9f6e" stroke-width=".7" opacity=".45"/>
+  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="9" font-weight="bold" letter-spacing="2.4" fill="#e6edf3">
+    <textPath href="#top" startOffset="50%" text-anchor="middle">STAYS LOCAL</textPath>
+  </text>
+  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="7" letter-spacing="1.7" fill="#0e9f6e">
+    <textPath href="#bottom" startOffset="50%" text-anchor="middle">NO EGRESS · VERIFIED</textPath>
+  </text>
+  <g transform="translate(56,55)" fill="none" stroke="#e6edf3" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-12 7h20a8 8 0 0 0 .6-16 11.6 11.6 0 0 0-20.8-4.2A9 9 0 0 0-14 5z"/>
+    <path d="M-16 12 17-13"/>
+  </g>
+</svg>

@@ -6,6 +6,9 @@
 
 **A badge for apps that never phone home — earned by a check anyone can rerun.**
 
+<a href="https://github.com/2JIHAN/stays-local/actions/workflows/bypasses.yml"><img src="https://github.com/2JIHAN/stays-local/actions/workflows/bypasses.yml/badge.svg" alt="Bypass corpus"></a>
+<a href="https://github.com/2JIHAN/stays-local/actions/workflows/reverify.yml"><img src="https://github.com/2JIHAN/stays-local/actions/workflows/reverify.yml/badge.svg" alt="Weekly re-verification"></a>
+<br>
 <a href="spec/core.md"><img src="https://img.shields.io/badge/spec-core-3b4252" alt="Spec"></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/verifiers-3%20wanted-0e9f6e" alt="Verifiers wanted"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
