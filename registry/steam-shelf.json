@@ -5,6 +5,7 @@
   "color": "0e9f6e",
   "labelColor": "3b4252",
   "name": "Steam Shelf",
+  "platform": "macos",
   "spec": "v1",
   "notes": [
     "PASS: no CFNetwork or Network.framework",
@@ -13,5 +14,5 @@
     "PASS: no sockets over a 20-second run"
   ],
   "repository": "https://github.com/2JIHAN/steam-shelf",
-  "run": "https://github.com/2JIHAN/stays-local/actions/runs/31193912414"
+  "run": "https://github.com/2JIHAN/stays-local/actions/runs/31196175699"
 }
