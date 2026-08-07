@@ -1,0 +1,8 @@
+{
+  "name": "Bypass case 001 — direct URLSession",
+  "platform": "macos",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./bypasses/macos/001-direct-urlsession/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Case001.app",
+  "declared_urls": []
+}

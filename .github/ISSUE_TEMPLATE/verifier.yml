@@ -1,0 +1,26 @@
+name: Work on a platform verifier
+description: Claim or discuss a verifier for a platform
+title: "verifier(<platform>): "
+labels: ["verifier", "help wanted"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [android, windows, ios, other]
+    validations: { required: true }
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approach
+      description: |
+        The spec draft lists open design questions. Which ones are you taking a position on,
+        and what is it? Disagreeing with the draft is expected.
+    validations: { required: true }
+  - type: checkboxes
+    id: read
+    attributes:
+      label: Read first
+      options:
+        - label: "I read spec/core.md and the platform's spec draft"
+          required: true

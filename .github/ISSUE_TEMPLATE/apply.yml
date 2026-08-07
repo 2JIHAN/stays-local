@@ -1,5 +1,5 @@
 name: Apply for certification
-description: Ask for your macOS app to be checked and listed
+description: Ask for your app to be checked and listed
 title: "Certify: "
 labels: ["application"]
 body:
@@ -10,12 +10,19 @@ body:
       description: Public source, owner/repo
       placeholder: 2JIHAN/steam-shelf
     validations: { required: true }
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Only platforms with a verifier can be certified today.
+      options: ["macos", "android (no verifier yet)", "windows (no verifier yet)", "ios (no verifier yet)"]
+    validations: { required: true }
   - type: checkboxes
     id: ready
     attributes:
       label: Before applying
       options:
-        - label: "`stays-local.json` is in the repository root (see SPEC.md)"
+        - label: "`stays-local.json` is in the repository root, with a `platform` field (see spec/core.md)"
           required: true
         - label: "The build command needs no secrets and produces the bundle into $STAYS_LOCAL_OUT"
           required: true

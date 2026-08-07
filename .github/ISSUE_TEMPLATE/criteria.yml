@@ -1,0 +1,23 @@
+name: Propose a criteria change
+description: A badge claims something it should not, or fails to claim something it should
+title: "criteria: "
+labels: ["criteria"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Criteria changes alter what every existing badge means, retroactively.
+        Open the issue first and describe the **problem**; the proposal document comes after
+        the discussion converges. See [GOVERNANCE.md](https://github.com/2JIHAN/stays-local/blob/main/GOVERNANCE.md).
+  - type: textarea
+    id: today
+    attributes:
+      label: What a badge claims today
+      description: Quote the layer from the spec.
+    validations: { required: true }
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong with it
+      description: An app that does X passes and should not, or fails and should not. Be concrete.
+    validations: { required: true }

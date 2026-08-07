@@ -1,0 +1,13 @@
+name: Bypass corpus
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every known bypass must still be caught
+        run: ./bypasses/run.sh macos

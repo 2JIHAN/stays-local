@@ -1,0 +1,30 @@
+name: Dispute a badge
+description: You think a certified app reaches the network
+title: "Dispute: "
+labels: ["dispute"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If you have a **working bypass** that would let any malicious app carry this badge,
+        please read [SECURITY.md](https://github.com/2JIHAN/stays-local/blob/main/SECURITY.md)
+        first — every certified app is affected until it is fixed.
+
+        For a single app you believe is misbehaving, this is the right place.
+  - type: input
+    id: app
+    attributes:
+      label: Which app
+      placeholder: steam-shelf
+    validations: { required: true }
+  - type: textarea
+    id: mechanism
+    attributes:
+      label: How does it reach the network
+      description: A plausible mechanism is enough to start. Proof is welcome, not required.
+    validations: { required: true }
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Packet capture, a log, a code path, anything you have
