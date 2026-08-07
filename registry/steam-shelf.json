@@ -4,7 +4,6 @@
   "message": "verified",
   "color": "0e9f6e",
   "labelColor": "3b4252",
-  "logoSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"#fff\" fill-rule=\"evenodd\" d=\"M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z\"/></svg>",
   "name": "Steam Shelf",
   "spec": "v1",
   "notes": [

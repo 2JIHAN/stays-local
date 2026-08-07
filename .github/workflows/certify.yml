@@ -28,7 +28,7 @@ jobs:
           path: subject
 
       - name: Verify
-        run: ./verify.sh subject --runtime --json "registry/${{ inputs.slug }}.json"
+        run: ./verify.sh subject --runtime --json "registry/${{ inputs.slug }}.json" --badge "badges/${{ inputs.slug }}.svg"
 
       - name: Record the result
         run: |
@@ -42,5 +42,5 @@ jobs:
           PY
           git config user.name "stays-local bot"
           git config user.email "noreply@github.com"
-          git add registry
+          git add registry badges
           git commit -m "Certify ${{ inputs.slug }}" && git push

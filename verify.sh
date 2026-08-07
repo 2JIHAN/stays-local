@@ -3,7 +3,7 @@
 #
 # Checks that a macOS app bundle has no way to reach the network.
 #
-#   ./verify.sh <subject-dir> [--runtime] [--json out.json]
+#   ./verify.sh <subject-dir> [--runtime] [--json out.json] [--badge out.svg]
 #
 # <subject-dir> must contain a stays-local.json manifest. See SPEC.md.
 # Exits 0 on pass, 1 on fail.
@@ -12,10 +12,12 @@ set -uo pipefail
 SUBJECT="${1:-.}"; shift 2>/dev/null
 RUNTIME=0
 JSON_OUT=""
+BADGE_OUT=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --runtime) RUNTIME=1 ;;
         --json) shift; JSON_OUT="$1" ;;
+        --badge) shift; BADGE_OUT="$1" ;;
     esac
     shift
 done
@@ -131,34 +133,61 @@ echo
 [ $FAILED -eq 0 ] && echo "PASS — $NAME meets stays local v1" \
                   || echo "FAIL — $NAME does not meet stays local v1"
 
-if [ -n "$JSON_OUT" ]; then
-    python3 - "$JSON_OUT" "$NAME" "$FAILED" "${NOTES[@]}" <<'PY'
+if [ -n "$JSON_OUT" ] || [ -n "$BADGE_OUT" ]; then
+    python3 - "$JSON_OUT" "$BADGE_OUT" "$NAME" "$FAILED" "${NOTES[@]}" <<'PY'
 import json, sys
-out, name, failed, *notes = sys.argv[1:]
+json_out, badge_out, name, failed, *notes = sys.argv[1:]
+ok = failed == "0"
+message = "verified" if ok else "failed"
+color = "#0e9f6e" if ok else "#e03131"
 
-# The scheme's mark: a cloud outline with a slash through it. Fill-only and
-# transform-free — Shields strips stroke-based logos.
-MARK = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
-    '<path fill="#fff" fill-rule="evenodd" d="'
-    'M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z '
-    'M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z '
-    'M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z"/></svg>'
-)
+# The mark: a cloud outline with a slash cut through it, fill-only so it
+# survives anywhere. fill-rule=evenodd makes the slash read as a cut.
+MARK = ('M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z '
+        'M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z '
+        'M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z')
 
-json.dump({
-    "schemaVersion": 1,
-    "label": "stays local",
-    "message": "verified" if failed == "0" else "failed",
-    "color": "0e9f6e" if failed == "0" else "e03131",
-    "labelColor": "3b4252",
-    "logoSvg": MARK,
-    "name": name,
-    "spec": "v1",
-    "notes": notes,
-}, open(out, "w"), indent=2, ensure_ascii=False)
+if json_out:
+    json.dump({
+        "schemaVersion": 1,
+        "label": "stays local",
+        "message": message,
+        "color": color.lstrip("#"),
+        "labelColor": "3b4252",
+        "name": name,
+        "spec": "v1",
+        "notes": notes,
+    }, open(json_out, "w"), indent=2, ensure_ascii=False)
+
+if badge_out:
+    # ~6.6px per character at 11px Verdana, plus padding.
+    right = int(len(message) * 6.6) + 16
+    left, total = 93, 93 + right
+    open(badge_out, "w").write(f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="20" role="img" aria-label="stays local: {message}">
+  <title>stays local: {message}</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r"><rect width="{total}" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="{left}" height="20" fill="#3b4252"/>
+    <rect x="{left}" width="{right}" height="20" fill="{color}"/>
+    <rect width="{total}" height="20" fill="url(#s)"/>
+  </g>
+  <svg x="5" y="3" width="14" height="14" viewBox="0 0 24 24">
+    <path fill="#fff" fill-rule="evenodd" d="{MARK}"/>
+  </svg>
+  <g fill="#fff" font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="11">
+    <text x="24" y="15" fill="#010101" fill-opacity=".3">stays local</text>
+    <text x="24" y="14">stays local</text>
+    <text x="{left + 8}" y="15" fill="#010101" fill-opacity=".3">{message}</text>
+    <text x="{left + 8}" y="14">{message}</text>
+  </g>
+</svg>
+''')
 PY
-    echo "     wrote $JSON_OUT"
+    [ -n "$JSON_OUT" ] && echo "     wrote $JSON_OUT"
+    [ -n "$BADGE_OUT" ] && echo "     wrote $BADGE_OUT"
 fi
 
 rm -rf "$OUT"
