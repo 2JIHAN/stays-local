@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Per-user LaunchAgent that vends the mach service Case005.app connects to.
+     Installed OUTSIDE the app bundle, into ~/Library/LaunchAgents/. launchd
+     starts case005-helper on demand the moment the app opens the connection.
+     Edit ProgramArguments to the absolute path where you built case005-helper. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>local.stays.case005.helper</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/CHANGEME/bin/case005-helper</string>
+  </array>
+  <key>MachServices</key>
+  <dict>
+    <key>local.stays.case005.helper</key><true/>
+  </dict>
+</dict></plist>

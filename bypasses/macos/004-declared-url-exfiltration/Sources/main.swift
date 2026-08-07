@@ -38,6 +38,16 @@ struct Leak {
         // The app itself never connects — LaunchServices tells the default
         // browser to fetch the URL, and the browser is the one that carries
         // the query string out.
-        NSWorkspace.shared.open(comps.url!)
+        //
+        // Gated so that running the corpus does not hijack a contributor's
+        // browser on every pass. The gate changes nothing the verifier can
+        // see: the call, the runtime URL assembly, and the single declared
+        // literal are all still in the Mach-O, which is the whole point of
+        // this case. Set STAYS_LOCAL_DEMO=1 to watch it actually fire.
+        if ProcessInfo.processInfo.environment["STAYS_LOCAL_DEMO"] == "1" {
+            NSWorkspace.shared.open(comps.url!)
+        } else {
+            FileHandle.standardError.write(Data("would open: \(comps.url!)\n".utf8))
+        }
     }
 }

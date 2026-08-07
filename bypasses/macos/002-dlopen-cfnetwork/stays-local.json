@@ -1,0 +1,8 @@
+{
+  "name": "Bypass case 002 — dlopen CFNetwork",
+  "platform": "macos",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./bypasses/macos/002-dlopen-cfnetwork/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Case002.app",
+  "declared_urls": []
+}

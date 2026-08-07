@@ -1,0 +1,8 @@
+{
+  "name": "Bypass case 005 — XPC to a helper outside the bundle",
+  "platform": "macos",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./bypasses/macos/005-xpc-helper/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Case005.app",
+  "declared_urls": []
+}
