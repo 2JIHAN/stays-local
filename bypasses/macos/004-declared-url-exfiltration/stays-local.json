@@ -1,0 +1,10 @@
+{
+  "name": "Bypass case 004 — declared-URL exfiltration",
+  "platform": "macos",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./bypasses/macos/004-declared-url-exfiltration/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Case004.app",
+  "declared_urls": [
+    { "url": "store.example.com", "reason": "Open Store Page — opened in the user's browser; the app never connects" }
+  ]
+}
