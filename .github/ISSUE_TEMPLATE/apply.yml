@@ -1,0 +1,28 @@
+name: Apply for certification
+description: Ask for your macOS app to be checked and listed
+title: "Certify: "
+labels: ["application"]
+body:
+  - type: input
+    id: repository
+    attributes:
+      label: Repository
+      description: Public source, owner/repo
+      placeholder: 2JIHAN/steam-shelf
+    validations: { required: true }
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Before applying
+      options:
+        - label: "`stays-local.json` is in the repository root (see SPEC.md)"
+          required: true
+        - label: "The build command needs no secrets and produces the bundle into $STAYS_LOCAL_OUT"
+          required: true
+        - label: "Every remote address in the binary is listed in declared_urls with a reason"
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything we should know
+      description: Helpers, XPC services, or anything else that affects what the check sees

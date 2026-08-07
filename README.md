@@ -1,0 +1,93 @@
+<div align="center">
+
+<img src="badges/seal.svg" width="130" alt="stays local">
+
+# stays local
+
+**A badge for macOS apps that never phone home — earned by a check anyone can rerun.**
+
+<a href="SPEC.md"><img src="https://img.shields.io/badge/spec-v1-3b4252" alt="Spec v1"></a>
+<img src="https://img.shields.io/badge/scope-macOS-000000?logo=apple&logoColor=white" alt="macOS">
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
+
+</div>
+
+Plenty of apps say they work locally. Nothing checks. `stays local` is the check: your source is built in this repository's CI, every Mach-O in the bundle is scanned for any way to reach the network, and the app is run and watched. Pass, and you get a badge that links to the public run that earned it.
+
+<div align="center">
+  <img src="badges/stays-local.svg" alt="stays local: verified">
+</div>
+
+## Registry
+
+| App | Verified | Declared addresses |
+|---|---|---|
+| [Steam Shelf](https://github.com/2JIHAN/steam-shelf) | ✅ spec v1 | `store.steampowered.com` — opened in the user's browser |
+
+## What passing means
+
+The app's shipped code contains no way to reach the network, and an observed run opened no sockets.
+
+| Layer | Check | Required |
+|---|---|---|
+| 1 | No Mach-O links `CFNetwork`, `Network.framework`, or `libnetwork` | Yes |
+| 2 | No networking symbols referenced (`URLSession`, `NWConnection`, sockets, …) | Yes |
+| 3 | Every remote address in the binary is declared, with a reason | Yes |
+| 4 | Zero open sockets over a 20-second observed run | Recorded |
+
+Layer 1 carries the weight. Source greps can be worked around; reaching the network cannot be done without linking those frameworks, and that shows up in `otool -L`. Every Mach-O in the bundle is checked — helpers, XPC services, embedded frameworks — not just the main executable.
+
+## What it does not mean
+
+| Not covered | Why |
+|---|---|
+| Code the app shells out to | `curl` in a script is invisible to a Mach-O scan |
+| XPC to another process | The app can ask a daemon that does have network access |
+| Files written for another app to upload | Nothing leaves *this* process; something else may carry it |
+| Code loaded at runtime | A plugin is not in the bundle we checked |
+| The binary you downloaded | We check a build from public source, not your download |
+
+It is one checkable property, not a privacy audit. [SPEC.md](SPEC.md) has the full definition.
+
+## Apply
+
+1. Add `stays-local.json` to your repository root:
+
+```json
+{
+  "name": "Your App",
+  "repository": "https://github.com/you/your-app",
+  "build": "./build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Your App.app",
+  "declared_urls": []
+}
+```
+
+2. Run the check yourself first:
+
+```bash
+git clone https://github.com/2JIHAN/stays-local.git
+./stays-local/verify.sh /path/to/your-repo --runtime
+```
+
+3. [Open an application issue](https://github.com/2JIHAN/stays-local/issues/new?template=apply.yml).
+
+The check then runs here, on a fresh checkout of your public source, and the log is public. You do not certify yourself.
+
+## Use the badge
+
+Once you are in the registry, the badge reads from your registry entry, so it goes stale if your app stops passing.
+
+```markdown
+[![stays local](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/2JIHAN/stays-local/main/registry/YOUR-SLUG.json)](https://github.com/2JIHAN/stays-local#registry)
+```
+
+## Staying honest
+
+Entries are re-verified weekly against the default branch. An entry that stops passing flips to `failed`, and since the badge reads the registry, the badge flips with it.
+
+Closed-source apps cannot be certified. The check needs to build from public source, and a claim you cannot inspect is the thing this is meant to replace.
+
+## License
+
+[MIT](LICENSE). The badge and seal are free to use for any app that is currently in the registry.

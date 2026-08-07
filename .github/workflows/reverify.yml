@@ -1,0 +1,56 @@
+name: Re-verify the registry
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      entries: ${{ steps.collect.outputs.entries }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: collect
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, pathlib
+          out = []
+          for f in sorted(pathlib.Path("registry").glob("*.json")):
+              d = json.load(open(f))
+              out.append({"slug": f.stem, "repository": d["repository"].split("github.com/")[-1]})
+          print("entries=" + json.dumps(out))
+          PY
+
+  verify:
+    needs: list
+    if: needs.list.outputs.entries != '[]'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJSON(needs.list.outputs.entries) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.entry.repository }}
+          path: subject
+      # 실패해도 결과를 기록해야 하므로 여기서 중단하지 않는다.
+      - run: ./verify.sh subject --runtime --json "registry/${{ matrix.entry.slug }}.json" || true
+      - run: |
+          python3 - <<'PY'
+          import json
+          p = "registry/${{ matrix.entry.slug }}.json"
+          d = json.load(open(p))
+          d["repository"] = "https://github.com/${{ matrix.entry.repository }}"
+          d["run"] = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
+          PY
+          git config user.name "stays-local bot"
+          git config user.email "noreply@github.com"
+          git add registry
+          git diff --cached --quiet || (git pull --rebase && git commit -m "Re-verify ${{ matrix.entry.slug }}" && git push)

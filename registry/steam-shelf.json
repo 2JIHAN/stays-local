@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "label": "stays local",
+  "message": "verified",
+  "color": "0e9f6e",
+  "name": "Steam Shelf",
+  "spec": "v1",
+  "notes": [
+    "PASS: CFNetwork·Network.framework 링크 없음",
+    "PASS: 네트워킹 심볼 참조 없음",
+    "PASS: 원격 주소는 신고된 것뿐 [store.steampowered.com]"
+  ],
+  "repository": "https://github.com/2JIHAN/steam-shelf"
+}
