@@ -4,13 +4,13 @@
   "message": "verified",
   "color": "0e9f6e",
   "labelColor": "3b4252",
-  "logoSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14 14\"><g fill=\"none\" stroke=\"#fff\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.6 10.2h5.6a2.3 2.3 0 0 0 .2-4.6 3.3 3.3 0 0 0-6-1.2 2.6 2.6 0 0 0-.6 5.1z\"/><path d=\"M1.5 12.4 11.1 2.8\"/></g></svg>",
+  "logoSvg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"#fff\" fill-rule=\"evenodd\" d=\"M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z\"/></svg>",
   "name": "Steam Shelf",
   "spec": "v1",
   "notes": [
-    "PASS: CFNetwork·Network.framework 링크 없음",
-    "PASS: 네트워킹 심볼 참조 없음",
-    "PASS: 원격 주소는 신고된 것뿐 [store.steampowered.com]"
+    "PASS: no CFNetwork or Network.framework",
+    "PASS: no networking symbols referenced",
+    "PASS: every remote address is declared [store.steampowered.com]"
   ],
   "repository": "https://github.com/2JIHAN/steam-shelf"
 }
