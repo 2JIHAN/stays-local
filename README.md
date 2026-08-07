@@ -59,7 +59,9 @@ Each platform defines its own layers; see its spec. Layers are `required` (faili
 | **Data smuggled in a declared URL** | Unsolved. See [known gaps](spec/core.md#known-gaps) |
 | The binary you downloaded | We check a build from public source, not your download |
 
-It is one checkable property, not a privacy audit. Say so when you cite it. [`bypasses/`](bypasses/) is the public catalogue of ways around it.
+It is one checkable property, not a privacy audit. Say so when you cite it.
+
+[`bypasses/`](bypasses/) is the public, executable catalogue of ways around it, and it does not flatter us: **three of five known macOS bypasses succeed today.** Two are inherent to scanning one process's binary — an app can shell out to `curl`, or hand data to a helper over XPC — and the third is the declared-URL gap. CI runs the corpus on every push, so a verifier that stops catching one goes red.
 
 ## Apply
 
