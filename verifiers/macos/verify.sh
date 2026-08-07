@@ -1,12 +1,12 @@
 #!/bin/bash
-# stays local — verifier, spec v1
+# stays local — macOS verifier, spec v1
 #
 # Checks that a macOS app bundle has no way to reach the network.
 #
 #   ./verify.sh <subject-dir> [--runtime] [--json out.json] [--badge out.svg]
 #
-# <subject-dir> must contain a stays-local.json manifest. See SPEC.md.
-# Exits 0 on pass, 1 on fail.
+# <subject-dir> must contain a stays-local.json manifest. See spec/macos.md.
+# Exits 0 on pass, 1 on fail. A verdict is written on every exit path.
 set -uo pipefail
 
 SUBJECT="${1:-.}"; shift 2>/dev/null
@@ -22,8 +22,43 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+PLATFORM="macos"
+SPEC="v1"
+NAME="unknown"
+FAILED=0
+NOTES=()
+OUT=""
+EMIT="$(cd "$(dirname "$0")/../_shared" && pwd)/emit.py"
+
+fail() { echo "  FAIL  $1"; NOTES+=("FAIL: $1"); FAILED=1; }
+pass() { echo "  PASS  $1"; NOTES+=("PASS: $1"); }
+info() { echo "        $1"; }
+
+# Writes the verdict wherever it was asked for. Called on every exit path,
+# including the early ones. A re-verification that cannot even build the app
+# has to record a failure — otherwise the previous PASS survives untouched and
+# the badge goes on claiming something nobody checked.
+emit() {
+    [ -n "$JSON_OUT$BADGE_OUT" ] || return 0
+    python3 "$EMIT" "${JSON_OUT:--}" "${BADGE_OUT:--}" "$NAME" "$PLATFORM" "$SPEC" "$FAILED" \
+        ${NOTES[@]+"${NOTES[@]}"}
+    [ -n "$JSON_OUT" ] && echo "     wrote $JSON_OUT"
+    [ -n "$BADGE_OUT" ] && echo "     wrote $BADGE_OUT"
+    return 0
+}
+
+# Fail, say why, record it, stop.
+die() {
+    echo "  FAIL  $1"
+    NOTES+=("FAIL: $1")
+    FAILED=1
+    emit
+    [ -n "$OUT" ] && rm -rf "$OUT"
+    exit 1
+}
+
 MANIFEST="$SUBJECT/stays-local.json"
-[ -f "$MANIFEST" ] || { echo "No manifest at $MANIFEST"; exit 1; }
+[ -f "$MANIFEST" ] || die "no stays-local.json at $MANIFEST"
 
 read_manifest() { python3 -c "
 import json
@@ -37,11 +72,9 @@ BUILD_CMD=$(read_manifest build)
 BUNDLE=$(read_manifest bundle)
 DECLARED=$(read_manifest declared_urls)
 
-FAILED=0
-NOTES=()
-fail() { echo "  FAIL  $1"; NOTES+=("FAIL: $1"); FAILED=1; }
-pass() { echo "  PASS  $1"; NOTES+=("PASS: $1"); }
-info() { echo "        $1"; }
+[ -n "$NAME" ]      || die "manifest has no \"name\""
+[ -n "$BUILD_CMD" ] || die "manifest has no \"build\" command"
+[ -n "$BUNDLE" ]    || die "manifest has no \"bundle\""
 
 echo "stays local — $NAME"
 echo
@@ -51,9 +84,9 @@ echo "Build"
 OUT="$(mktemp -d)"
 export STAYS_LOCAL_OUT="$OUT"
 ( cd "$SUBJECT" && eval "$BUILD_CMD" ) >/dev/null 2>&1 \
-    || { echo "  Build failed: $BUILD_CMD"; exit 1; }
+    || die "build failed: $BUILD_CMD"
 APP="$OUT/$BUNDLE"
-[ -d "$APP" ] || { echo "  No bundle at $APP"; exit 1; }
+[ -d "$APP" ] || die "build produced no bundle at $BUNDLE"
 info "$BUNDLE"
 
 # Every Mach-O in the bundle, not just the main executable. A clean main
@@ -62,6 +95,7 @@ MACHOS=()
 while IFS= read -r f; do
     file -b "$f" 2>/dev/null | grep -q "Mach-O" && MACHOS+=("$f")
 done < <(find "$APP" -type f \( -perm +111 -o -name "*.dylib" \) 2>/dev/null | sort -u)
+[ "${#MACHOS[@]}" -gt 0 ] || die "no Mach-O files in the bundle — nothing to verify"
 info "${#MACHOS[@]} Mach-O file(s)"
 
 # ─────────────────────────────────────────────────────────────
@@ -130,65 +164,9 @@ fi
 
 # ─────────────────────────────────────────────────────────────
 echo
-[ $FAILED -eq 0 ] && echo "PASS — $NAME meets stays local v1" \
-                  || echo "FAIL — $NAME does not meet stays local v1"
+[ $FAILED -eq 0 ] && echo "PASS — $NAME meets stays local $PLATFORM $SPEC" \
+                  || echo "FAIL — $NAME does not meet stays local $PLATFORM $SPEC"
 
-if [ -n "$JSON_OUT" ] || [ -n "$BADGE_OUT" ]; then
-    python3 - "$JSON_OUT" "$BADGE_OUT" "$NAME" "$FAILED" "${NOTES[@]}" <<'PY'
-import json, sys
-json_out, badge_out, name, failed, *notes = sys.argv[1:]
-ok = failed == "0"
-message = "verified" if ok else "failed"
-color = "#0e9f6e" if ok else "#e03131"
-
-# The mark: a cloud outline with a slash cut through it, fill-only so it
-# survives anywhere. fill-rule=evenodd makes the slash read as a cut.
-MARK = ('M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z '
-        'M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z '
-        'M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z')
-
-if json_out:
-    json.dump({
-        "schemaVersion": 1,
-        "label": "stays local",
-        "message": message,
-        "color": color.lstrip("#"),
-        "labelColor": "3b4252",
-        "name": name,
-        "spec": "v1",
-        "notes": notes,
-    }, open(json_out, "w"), indent=2, ensure_ascii=False)
-
-if badge_out:
-    # ~6.6px per character at 11px Verdana, plus padding.
-    right = int(len(message) * 6.6) + 16
-    left, total = 93, 93 + right
-    open(badge_out, "w").write(f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="20" role="img" aria-label="stays local: {message}">
-  <title>stays local: {message}</title>
-  <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/>
-  </linearGradient>
-  <clipPath id="r"><rect width="{total}" height="20" rx="3" fill="#fff"/></clipPath>
-  <g clip-path="url(#r)">
-    <rect width="{left}" height="20" fill="#3b4252"/>
-    <rect x="{left}" width="{right}" height="20" fill="{color}"/>
-    <rect width="{total}" height="20" fill="url(#s)"/>
-  </g>
-  <svg x="5" y="3" width="14" height="14" viewBox="0 0 24 24">
-    <path fill="#fff" fill-rule="evenodd" d="{MARK}"/>
-  </svg>
-  <g fill="#fff" font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="11">
-    <text x="24" y="15" fill="#010101" fill-opacity=".3">stays local</text>
-    <text x="24" y="14">stays local</text>
-    <text x="{left + 8}" y="15" fill="#010101" fill-opacity=".3">{message}</text>
-    <text x="{left + 8}" y="14">{message}</text>
-  </g>
-</svg>
-''')
-PY
-    [ -n "$JSON_OUT" ] && echo "     wrote $JSON_OUT"
-    [ -n "$BADGE_OUT" ] && echo "     wrote $BADGE_OUT"
-fi
-
+emit
 rm -rf "$OUT"
 exit $FAILED

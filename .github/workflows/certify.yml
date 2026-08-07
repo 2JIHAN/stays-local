@@ -14,6 +14,10 @@ on:
         description: "registry filename, e.g. steam-shelf"
         required: true
 
+concurrency:
+  group: registry-writes
+  cancel-in-progress: false
+
 jobs:
   certify:
     runs-on: macos-15
@@ -46,5 +50,9 @@ jobs:
           # Re-certifying an unchanged app produces no diff; that is not a failure.
           git diff --cached --quiet && echo "no change" && exit 0
           git commit -m "Certify ${{ inputs.slug }}"
-          git pull --rebase
-          git push
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            echo "push attempt $attempt failed, retrying"
+            sleep 5
+          done
+          exit 1

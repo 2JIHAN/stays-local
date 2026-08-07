@@ -5,11 +5,17 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+# A second run starting while the first is still pushing would fight it.
+concurrency:
+  group: registry-writes
+  cancel-in-progress: false
+
 jobs:
   list:
     runs-on: ubuntu-latest
     outputs:
       entries: ${{ steps.collect.outputs.entries }}
+      count: ${{ steps.collect.outputs.count }}
     steps:
       - uses: actions/checkout@v4
       - id: collect
@@ -19,18 +25,26 @@ jobs:
           out = []
           for f in sorted(pathlib.Path("registry").glob("*.json")):
               d = json.load(open(f))
-              out.append({"slug": f.stem, "repository": d["repository"].split("github.com/")[-1]})
+              repo = d.get("repository", "")
+              if "github.com/" not in repo:
+                  continue
+              out.append({"slug": f.stem, "repository": repo.split("github.com/")[-1].strip("/")})
           print("entries=" + json.dumps(out))
+          print("count=" + str(len(out)))
           PY
+      - run: echo "Re-verifying ${{ steps.collect.outputs.count }} entr(ies)"
 
   verify:
     needs: list
-    if: needs.list.outputs.entries != '[]'
+    if: needs.list.outputs.count != '0'
     runs-on: macos-15
     permissions:
       contents: write
     strategy:
       fail-fast: false
+      # Serialized on purpose: matrix jobs all push to the same branch, and a
+      # retry loop around a race is worse than not racing.
+      max-parallel: 1
       matrix:
         entry: ${{ fromJSON(needs.list.outputs.entries) }}
     steps:
@@ -39,9 +53,15 @@ jobs:
         with:
           repository: ${{ matrix.entry.repository }}
           path: subject
-      # 실패해도 결과를 기록해야 하므로 여기서 중단하지 않는다.
-      - run: ./verify.sh subject --runtime --json "registry/${{ matrix.entry.slug }}.json" --badge "badges/${{ matrix.entry.slug }}.svg" || true
-      - run: |
+
+      # Do not stop on a failing verdict — a failure is a result we must record.
+      # The verifier writes the verdict on every exit path, including a build
+      # failure, so "|| true" cannot leave a stale PASS behind.
+      - name: Verify
+        run: ./verify.sh subject --runtime --json "registry/${{ matrix.entry.slug }}.json" --badge "badges/${{ matrix.entry.slug }}.svg" || true
+
+      - name: Record the result
+        run: |
           python3 - <<'PY'
           import json
           p = "registry/${{ matrix.entry.slug }}.json"
@@ -53,4 +73,26 @@ jobs:
           git config user.name "stays-local bot"
           git config user.email "noreply@github.com"
           git add registry badges
-          git diff --cached --quiet || (git pull --rebase && git commit -m "Re-verify ${{ matrix.entry.slug }}" && git push)
+          if git diff --cached --quiet; then
+            echo "no change for ${{ matrix.entry.slug }}"
+            exit 0
+          fi
+          # Commit first: git pull --rebase refuses to run with staged changes.
+          git commit -m "Re-verify ${{ matrix.entry.slug }}"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            echo "push attempt $attempt failed, retrying"
+            sleep 5
+          done
+          exit 1
+
+      - name: Report the verdict in the summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          d = json.load(open("registry/${{ matrix.entry.slug }}.json"))
+          print(f"### {d['name']} — **{d['message']}**\n")
+          for n in d.get("notes", []):
+              print(f"- {n}")
+          PY
