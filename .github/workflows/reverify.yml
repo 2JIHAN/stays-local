@@ -104,24 +104,31 @@ jobs:
           path: verdicts
       - name: Record every verdict
         run: |
-          shopt -s nullglob
-          for d in verdicts/verdict-*/; do
-            slug=$(basename "$d"); slug=${slug#verdict-}
-            cp "$d/verdict.json" "registry/$slug.json"
-            cp "$d/verdict.svg" "badges/$slug.svg"
-            echo "recorded $slug"
-          done
           git config user.name "stays-local bot"
           git config user.email "noreply@github.com"
-          git add registry badges
-          if git diff --cached --quiet; then
-            echo "no change"
-            exit 0
-          fi
-          git commit -m "Re-verify the registry"
+          # Re-apply onto the freshest origin each attempt rather than rebasing.
+          # These files are generated, so there is no merge to do: the verdict
+          # this run computed is the one that should land. Rebasing them
+          # produced content conflicts when two runs overlapped, and left the
+          # tree unmerged so every retry after the first was guaranteed to fail.
           for attempt in 1 2 3; do
-            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
-            echo "push attempt $attempt failed, retrying"
+            git fetch -q origin "${GITHUB_REF_NAME}"
+            git reset -q --hard "origin/${GITHUB_REF_NAME}"
+            shopt -s nullglob
+            for d in verdicts/verdict-*/; do
+              slug=$(basename "$d"); slug=${slug#verdict-}
+              cp "$d/verdict.json" "registry/$slug.json"
+              cp "$d/verdict.svg" "badges/$slug.svg"
+            done
+            python3 tools/render-registry.py
+            git add registry badges
+            if git diff --cached --quiet; then
+              echo "no change"
+              exit 0
+            fi
+            git commit -q -m "Re-verify the registry"
+            git push && exit 0
+            echo "push attempt $attempt lost a race, re-applying"
             sleep 5
           done
           exit 1
