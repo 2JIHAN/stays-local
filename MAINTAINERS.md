@@ -11,7 +11,7 @@
 | Platform | Maintainers |
 |---|---|
 | macOS | [@2JIHAN](https://github.com/2JIHAN) |
-| Android | *none — [the seat is open](https://github.com/2JIHAN/stays-local/labels/verifier)* |
+| Android | [@2JIHAN](https://github.com/2JIHAN) |
 | Windows | *none — [the seat is open](https://github.com/2JIHAN/stays-local/labels/verifier)* |
 | iOS | *none — [the seat is open](https://github.com/2JIHAN/stays-local/labels/verifier)* |
 

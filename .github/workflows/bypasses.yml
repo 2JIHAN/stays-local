@@ -11,3 +11,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Every known bypass must still be caught
         run: ./bypasses/run.sh macos
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every known bypass must still be caught
+        run: ./bypasses/run.sh android
+
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # A verifier that only ever fails things is not a verifier. This is the
+      # other direction: an app with no networking must come out PASS.
+      - name: A clean app must pass
+        run: |
+          cp verifiers/android/fixture/stays-local.json ./stays-local.json
+          ./verify.sh .

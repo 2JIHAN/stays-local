@@ -16,11 +16,11 @@ Criteria changes are held higher because they change what every existing badge m
 | Platform | Spec | Verifier |
 |---|---|---|
 | macOS | [stable](spec/macos.md) | [implemented](verifiers/macos/verify.sh) |
-| Android | [draft](spec/android.md) | wanted |
+| Android | [stable](spec/android.md) | [implemented](verifiers/android/verify.sh) |
 | Windows | [draft](spec/windows.md) | wanted |
 | iOS | [draft](spec/ios.md) | wanted |
 
-Start with Android if you want the most valuable one. It is the only platform where the operating system enforces the property rather than us inferring it, which makes its badge worth more than the others.
+Windows is the closer of the two — the evidence is the PE import table, much like macOS. iOS needs design work first: `UIKit` drags `CFNetwork` into every app, so the linkage layer that carries macOS proves nothing there, and whoever takes it has to decide what replaces it.
 
 **Bypasses are the second thing.** A badge is only as good as the attacks it survives. [`bypasses/`](bypasses/) is a corpus of apps that reach the network while passing some or all layers. Adding a case that current verifiers miss is a real contribution — arguably a better one than adding a feature. See [`bypasses/README.md`](bypasses/README.md).
 

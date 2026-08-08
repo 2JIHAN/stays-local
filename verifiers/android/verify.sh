@@ -60,7 +60,12 @@ die() {
 # tool has to be found through ANDROID_HOME. Glob the build-tools version
 # rather than pinning: ubuntu-latest carries 34 through 37, macos-15 starts
 # at 35, and a pinned version breaks on one of them.
-SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+for candidate in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" \
+                 /usr/local/lib/android/sdk "$HOME/Library/Android/sdk" \
+                 "$HOME/Android/Sdk"; do
+    [ -n "$candidate" ] && [ -d "$candidate/build-tools" ] && { SDK="$candidate"; break; }
+done
+SDK="${SDK:-/usr/local/lib/android/sdk}"
 AAPT2=$(ls -d "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)
 [ -x "${AAPT2:-}" ] || AAPT2=$(command -v aapt2 2>/dev/null)
 

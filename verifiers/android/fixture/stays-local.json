@@ -1,0 +1,8 @@
+{
+  "name": "Android verifier self-test",
+  "platform": "android",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./verifiers/android/fixture/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Clean.apk",
+  "declared_urls": []
+}
