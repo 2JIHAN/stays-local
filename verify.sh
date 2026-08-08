@@ -38,7 +38,7 @@ if [ ! -x "$VERIFIER" ]; then
     echo
     echo "Wanted:"
     for d in "$HERE"/verifiers/*/; do
-        [ -x "$d/verify.sh" ] || echo "  $(basename "$d") — see $(basename "$d")/README.md and spec/$(basename "$d").md"
+        [ -x "$d/verify.sh" ] || echo "  $(basename "$d") — see verifiers/$(basename "$d")/README.md and spec/$(basename "$d").md"
     done
     exit 1
 fi

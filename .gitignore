@@ -1,1 +1,6 @@
 .DS_Store
+
+# bypasses/run.sh copies each case's manifest here while it runs. An
+# interrupted run leaves it behind, and committing it would make this
+# repository look like a certification subject of itself.
+/stays-local.json

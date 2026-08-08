@@ -36,11 +36,15 @@ Platforms are not interchangeable, and the badge should not pretend otherwise. A
 
 ## Registry
 
+<!-- registry:start -->
 | App | Platform | Badge | Declared addresses | |
 |---|---|---|---|---|
-| [Steam Shelf](https://github.com/2JIHAN/steam-shelf) | macOS | ![](badges/steam-shelf.svg) | `store.steampowered.com` — opened in the user's browser, never connected to by the app | ⚠︎ steward's own app |
+| [Steam Shelf](https://github.com/2JIHAN/steam-shelf) | macos | ![](badges/steam-shelf.svg) | `store.steampowered.com` — Handed to the user's browser by NSWorkspace when they pick Open Store Page from the context menu. The app itself never connects. | ⚠︎ steward's own app |
+<!-- registry:end -->
 
-⚠︎ marks an app submitted by a maintainer. [Governance](GOVERNANCE.md#conflicts-of-interest) requires the relationship to be visible; a maintainer cannot approve their own certification, and the run decides regardless. Ownership is recorded in [`registry/ownership.json`](registry/ownership.json).
+⚠︎ marks an app submitted by a maintainer. [Governance](GOVERNANCE.md#conflicts-of-interest) requires the relationship to be visible; a maintainer cannot approve their own certification, and the run decides regardless.
+
+Declared addresses are published here because disclosure is the only mitigation this scheme has for [data smuggled through a declared URL](spec/core.md#known-gaps). This table is generated from `registry/` by `tools/render-registry.py`, so what you read is what the check accepted.
 
 ## What passing means
 

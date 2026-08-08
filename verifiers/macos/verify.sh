@@ -41,7 +41,7 @@ info() { echo "        $1"; }
 emit() {
     [ -n "$JSON_OUT$BADGE_OUT" ] || return 0
     python3 "$EMIT" "${JSON_OUT:--}" "${BADGE_OUT:--}" "$NAME" "$PLATFORM" "$SPEC" "$FAILED" \
-        ${NOTES[@]+"${NOTES[@]}"}
+        "${DECLARED_JSON:-[]}" ${NOTES[@]+"${NOTES[@]}"}
     [ -n "$JSON_OUT" ] && echo "     wrote $JSON_OUT"
     [ -n "$BADGE_OUT" ] && echo "     wrote $BADGE_OUT"
     return 0
@@ -71,6 +71,12 @@ NAME=$(read_manifest name)
 BUILD_CMD=$(read_manifest build)
 BUNDLE=$(read_manifest bundle)
 DECLARED=$(read_manifest declared_urls)
+# The full entries, not just the hosts: the reason is what makes disclosure
+# worth anything to someone deciding whether to trust the badge.
+DECLARED_JSON=$(python3 -c "
+import json
+print(json.dumps(json.load(open('$MANIFEST')).get('declared_urls', [])))
+")
 
 [ -n "$NAME" ]      || die "manifest has no \"name\""
 [ -n "$BUILD_CMD" ] || die "manifest has no \"build\" command"

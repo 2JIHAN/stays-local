@@ -26,6 +26,14 @@ Platform maintainers hold authority over their own platform. A change to `spec/a
 
 Decisions are made in public issues and pull requests. If a thread stalls, a steward decides and writes down why.
 
+### While the roster is one person
+
+Every rule above one approval is currently unexecutable: [MAINTAINERS.md](MAINTAINERS.md) lists one steward and one platform maintainer, and they are the same person. Pretending otherwise would make this document decoration.
+
+Until a second maintainer exists, a change that would need two approvals instead needs a **written proposal in [`proposals/`](proposals/) that states what was wrong, what changed, and the effect on every existing badge** — merged by the steward, in public, with the reasoning attached rather than assumed. [`proposals/0001`](proposals/0001-layer-statuses.md) is the first one and shows the shape.
+
+That is weaker than review by someone else, and it is meant to be temporary. The two-approval rules take effect the moment a second maintainer lands, with no further amendment needed.
+
 ## Certification is not a judgement call
 
 A maintainer starts the run. The run decides. There is no path for a maintainer to certify an app that fails, or to reject one that passes, and no private list of trusted publishers.

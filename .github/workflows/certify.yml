@@ -46,8 +46,12 @@ jobs:
           path: subject
           persist-credentials: false
 
+      # A failing verdict is a result to record, not a reason to stop. Without
+      # this, certification could only ever promote: a re-certification that
+      # now fails would abort before recording, leaving the old green badge in
+      # place while nothing in the repo could turn it red.
       - name: Verify
-        run: ./verify.sh subject --runtime --json "verdict.json" --badge "verdict.svg"
+        run: ./verify.sh subject --runtime --json "verdict.json" --badge "verdict.svg" || true
 
       - name: Attach the run to the verdict
         if: always()

@@ -19,6 +19,15 @@ jobs:
       - name: Every known bypass must still be caught
         run: ./bypasses/run.sh android
 
+  registry-table:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The table used to be hand-written, so what a reader saw and what the
+      # check accepted could drift apart with nobody noticing.
+      - name: The README's registry table must match the registry
+        run: python3 tools/render-registry.py --check
+
   self-test:
     runs-on: ubuntu-latest
     steps:

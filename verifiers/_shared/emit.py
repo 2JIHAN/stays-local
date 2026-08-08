@@ -4,7 +4,13 @@
 Every platform verifier calls this instead of carrying its own copy, so a
 badge means the same thing and looks the same whatever produced it.
 
-    emit.py <json_out|-> <badge_out|-> <name> <platform> <spec> <failed> [note ...]
+    emit.py <json_out|-> <badge_out|-> <name> <platform> <spec> <failed> \
+            <declared_json> [note ...]
+
+`declared_json` is the manifest's declared_urls array, verbatim, as JSON. It is
+published on the registry entry because disclosure is the only mitigation the
+scheme has for data smuggled through a declared URL — see spec/core.md. Pass
+"[]" when there are none.
 
 `failed` is "0" for a pass and anything else for a fail. Pass "-" for an
 output you do not want written.
@@ -64,7 +70,11 @@ def badge_svg(message: str, color: str) -> str:
 
 
 def main() -> None:
-    json_out, badge_out, name, platform, spec, failed, *notes = sys.argv[1:]
+    json_out, badge_out, name, platform, spec, failed, declared_json, *notes = sys.argv[1:]
+    try:
+        declared = json.loads(declared_json or "[]")
+    except json.JSONDecodeError:
+        declared = []
     ok = failed == "0"
     message = "verified" if ok else "failed"
     color = PASS_COLOR if ok else FAIL_COLOR
@@ -80,6 +90,11 @@ def main() -> None:
                 "name": name,
                 "platform": platform,
                 "spec": spec,
+                # Every remote address the artifact contains, with the reason
+                # given for it. spec/core.md calls this the only mitigation for
+                # the declared-URL gap, so it has to be on the entry rather
+                # than only in the subject's own repository.
+                "declared_urls": declared,
                 "notes": notes,
             }, f, indent=2, ensure_ascii=False)
             f.write("\n")

@@ -7,11 +7,16 @@
   "name": "Steam Shelf",
   "platform": "macos",
   "spec": "v1",
+  "declared_urls": [
+    {
+      "url": "store.steampowered.com",
+      "reason": "Handed to the user's browser by NSWorkspace when they pick Open Store Page from the context menu. The app itself never connects."
+    }
+  ],
   "notes": [
     "PASS: no CFNetwork or Network.framework",
     "PASS: no networking symbols referenced",
-    "PASS: every remote address is declared [store.steampowered.com]",
-    "PASS: no sockets over a 20-second run"
+    "PASS: every remote address is declared [store.steampowered.com]"
   ],
   "repository": "https://github.com/2JIHAN/steam-shelf",
   "run": "https://github.com/2JIHAN/stays-local/actions/runs/31196175699"
