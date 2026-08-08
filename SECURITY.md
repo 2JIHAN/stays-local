@@ -32,4 +32,6 @@ The bypass corpus is public even though it is a catalogue of attacks. A scheme t
 
 ## The CI runner
 
-Certification builds arbitrary code from applicant repositories on GitHub-hosted runners. That is inherent to the design — a check that trusts the applicant's own build output is not a check. The runner is ephemeral, has no secrets beyond a scoped `GITHUB_TOKEN`, and can only write to `registry/` and `badges/`. Reports about that boundary are in scope.
+Certification builds arbitrary code from applicant repositories on GitHub-hosted runners. That is inherent to the design — a check that trusts the applicant's own build output is not a check. The job that runs an applicant's build holds **read-only** permissions and checks out with `persist-credentials: false`, so no token capable of writing this repository is present while their code executes. Its verdict travels to a separate job as an artifact, and only that second job — which runs none of the applicant's code — can commit.
+
+That split is the containment. Without it, a malicious applicant could certify themselves by pushing rather than by passing, which would be a total compromise of the scheme rather than a bug in one badge. Reports about that boundary are in scope.

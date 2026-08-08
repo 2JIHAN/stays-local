@@ -13,42 +13,96 @@ on:
       slug:
         description: "registry filename, e.g. steam-shelf"
         required: true
+      platform:
+        description: "macos or android"
+        required: true
+        default: "macos"
+        type: choice
+        options: [macos, android]
 
 concurrency:
   group: registry-writes
   cancel-in-progress: false
 
 jobs:
-  certify:
-    runs-on: macos-15
+  # Split in two on purpose. Certifying means building an applicant's arbitrary
+  # code, so that build must never run in a job that holds a token able to write
+  # this repository — otherwise a malicious applicant could certify themselves
+  # by pushing rather than by passing. This job has read-only permissions and
+  # no credentials left in the workspace; it hands its verdict over as an
+  # artifact, and only the job below can write.
+  verify:
+    runs-on: ${{ inputs.platform == 'android' && 'ubuntu-latest' || 'macos-15' }}
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.ref }}
           path: subject
+          persist-credentials: false
 
       - name: Verify
-        run: ./verify.sh subject --runtime --json "registry/${{ inputs.slug }}.json" --badge "badges/${{ inputs.slug }}.svg"
+        run: ./verify.sh subject --runtime --json "verdict.json" --badge "verdict.svg"
+
+      - name: Attach the run to the verdict
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open("verdict.json"))
+          d["repository"] = "https://github.com/${{ inputs.repository }}"
+          d["run"] = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          json.dump(d, open("verdict.json", "w"), indent=2, ensure_ascii=False)
+          print(f"### {d['name']} — **{d['message']}**\n")
+          for n in d.get("notes", []):
+              print(f"- {n}")
+          PY
+          python3 -c "
+          import json,os
+          d=json.load(open('verdict.json'))
+          open(os.environ['GITHUB_STEP_SUMMARY'],'a').write(
+              f\"### {d['name']} — **{d['message']}**\n\n\" +
+              ''.join(f'- {n}\n' for n in d.get('notes', [])))
+          "
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verdict-${{ inputs.slug }}
+          path: |
+            verdict.json
+            verdict.svg
+
+  record:
+    needs: verify
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verdict-${{ inputs.slug }}
+          path: verdict
 
       - name: Record the result
         run: |
-          python3 - <<'PY'
-          import json, os
-          p = "registry/${{ inputs.slug }}.json"
-          d = json.load(open(p))
-          d["repository"] = "https://github.com/${{ inputs.repository }}"
-          d["run"] = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
-          PY
+          cp verdict/verdict.json "registry/${{ inputs.slug }}.json"
+          cp verdict/verdict.svg "badges/${{ inputs.slug }}.svg"
           git config user.name "stays-local bot"
           git config user.email "noreply@github.com"
           git add registry badges
           # Re-certifying an unchanged app produces no diff; that is not a failure.
-          git diff --cached --quiet && echo "no change" && exit 0
+          if git diff --cached --quiet; then
+            echo "no change"
+            exit 0
+          fi
           git commit -m "Certify ${{ inputs.slug }}"
           for attempt in 1 2 3; do
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0

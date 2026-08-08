@@ -5,7 +5,6 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-# A second run starting while the first is still pushing would fight it.
 concurrency:
   group: registry-writes
   cancel-in-progress: false
@@ -18,81 +17,111 @@ jobs:
       count: ${{ steps.collect.outputs.count }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - id: collect
         run: |
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json, pathlib
           out = []
           for f in sorted(pathlib.Path("registry").glob("*.json")):
+              if f.name == "ownership.json":
+                  continue
               d = json.load(open(f))
               repo = d.get("repository", "")
               if "github.com/" not in repo:
                   continue
-              out.append({"slug": f.stem, "repository": repo.split("github.com/")[-1].strip("/")})
+              out.append({
+                  "slug": f.stem,
+                  "repository": repo.split("github.com/")[-1].strip("/"),
+                  "platform": d.get("platform", "macos"),
+              })
           print("entries=" + json.dumps(out))
           print("count=" + str(len(out)))
           PY
       - run: echo "Re-verifying ${{ steps.collect.outputs.count }} entr(ies)"
 
+  # Read-only, and no credentials in the workspace: this job builds an
+  # applicant's arbitrary code, so it must not hold a token that can write
+  # this repository. The verdict travels to the recording job as an artifact.
   verify:
     needs: list
     if: needs.list.outputs.count != '0'
-    runs-on: macos-15
+    runs-on: ${{ matrix.entry.platform == 'android' && 'ubuntu-latest' || 'macos-15' }}
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
-      # Serialized on purpose: matrix jobs all push to the same branch, and a
-      # retry loop around a race is worse than not racing.
-      max-parallel: 1
       matrix:
         entry: ${{ fromJSON(needs.list.outputs.entries) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: ${{ matrix.entry.repository }}
           path: subject
+          persist-credentials: false
 
-      # Do not stop on a failing verdict — a failure is a result we must record.
-      # The verifier writes the verdict on every exit path, including a build
-      # failure, so "|| true" cannot leave a stale PASS behind.
+      # A failing verdict is a result to record, not a reason to stop. The
+      # verifier writes a verdict on every exit path, including a build that
+      # never produced a bundle, so "|| true" cannot leave a stale PASS behind.
       - name: Verify
-        run: ./verify.sh subject --runtime --json "registry/${{ matrix.entry.slug }}.json" --badge "badges/${{ matrix.entry.slug }}.svg" || true
+        run: ./verify.sh subject --runtime --json verdict.json --badge verdict.svg || true
 
-      - name: Record the result
+      - name: Attach the run to the verdict
         run: |
           python3 - <<'PY'
-          import json
-          p = "registry/${{ matrix.entry.slug }}.json"
-          d = json.load(open(p))
+          import json, os
+          d = json.load(open("verdict.json"))
           d["repository"] = "https://github.com/${{ matrix.entry.repository }}"
           d["run"] = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
+          json.dump(d, open("verdict.json", "w"), indent=2, ensure_ascii=False)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(f"### {d['name']} — **{d['message']}**\n\n")
+              for n in d.get("notes", []):
+                  f.write(f"- {n}\n")
           PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verdict-${{ matrix.entry.slug }}
+          path: |
+            verdict.json
+            verdict.svg
+
+  record:
+    needs: verify
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: verdicts
+      - name: Record every verdict
+        run: |
+          shopt -s nullglob
+          for d in verdicts/verdict-*/; do
+            slug=$(basename "$d"); slug=${slug#verdict-}
+            cp "$d/verdict.json" "registry/$slug.json"
+            cp "$d/verdict.svg" "badges/$slug.svg"
+            echo "recorded $slug"
+          done
           git config user.name "stays-local bot"
           git config user.email "noreply@github.com"
           git add registry badges
           if git diff --cached --quiet; then
-            echo "no change for ${{ matrix.entry.slug }}"
+            echo "no change"
             exit 0
           fi
-          # Commit first: git pull --rebase refuses to run with staged changes.
-          git commit -m "Re-verify ${{ matrix.entry.slug }}"
+          git commit -m "Re-verify the registry"
           for attempt in 1 2 3; do
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
             echo "push attempt $attempt failed, retrying"
             sleep 5
           done
           exit 1
-
-      - name: Report the verdict in the summary
-        if: always()
-        run: |
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json
-          d = json.load(open("registry/${{ matrix.entry.slug }}.json"))
-          print(f"### {d['name']} — **{d['message']}**\n")
-          for n in d.get("notes", []):
-              print(f"- {n}")
-          PY
