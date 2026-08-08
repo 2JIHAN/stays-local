@@ -4,7 +4,7 @@
 
 Read `spec/core.md` first.
 
-iOS looks like macOS and is not. The macOS spec leans on layer 1 — "nothing links CFNetwork" — and that layer does not transfer, because UIKit pulls CFNetwork in transitively on essentially every app. Whoever implements this has to replace the load-bearing layer with something else, and that design work is the hard part.
+iOS looks like macOS and is not, but not for the reason this spec first gave. macOS does not lean on linkage either — [`proposals/0001`](../proposals/0001-layer-statuses.md) established that `Foundation` exports `NSURLSession` directly, so a clean `otool -L` proves little there either, and the symbol scan is what carries the verdict. On iOS that is even more true: `UIKit` drags CFNetwork in on essentially every app, so layer 1 is close to noise rather than merely weaker. Whoever implements this inherits a platform where symbol references are the whole case, and has to decide whether that is enough for the same badge.
 
 ## Subject
 

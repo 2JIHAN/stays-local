@@ -25,7 +25,7 @@ app's pid can find.
 **Actual verdict today.** `PASS`. It clears every required layer, so the corpus
 harness (`bypasses/run.sh`) records it as `uncaught` — the correct, intended
 signal for a working, undocumented-to-the-verifier bypass, not a bug in this
-fixture. This is [bypass macos/005 in the catalogue](../README.md) and is named in
+fixture. This is [bypass macos/005 in the catalogue](../../README.md) and is named in
 `spec/core.md` under "What the badge does not claim" (*"IPC to another process:
 the app can ask a service that does have network access"*). **It is currently NOT
 caught.**
