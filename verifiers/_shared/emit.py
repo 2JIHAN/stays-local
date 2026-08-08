@@ -17,7 +17,7 @@ import sys
 # cloud instead of being interrupted mid-curve — which is what a partial path
 # looks like once it is bigger than a favicon.
 CLOUD = "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"
-SLASH = ("4", "4", "20", "20")
+SLASH = ("4", "20", "20", "4")
 
 
 def mark(bg: str) -> str:
