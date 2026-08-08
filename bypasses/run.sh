@@ -80,8 +80,12 @@ done
 
 echo
 if [ "$RAN" -eq 0 ]; then
-    echo "no executable cases ran"
-    exit 0
+    # A corpus that runs nothing must not report success. CI would go green on a
+    # deleted directory, a broken glob, or a platform filter that matches
+    # nothing -- and green would mean "no bypass got through" to anyone reading.
+    echo "no executable cases ran — nothing was actually checked"
+    [ -n "$PLATFORM" ] && echo "  (no cases for platform \"$PLATFORM\", or no verifier for it)"
+    exit 1
 fi
 
 echo "$RAN case(s): $((RAN - KNOWN_UNCAUGHT - ${#IMPROVED[@]})) caught, $KNOWN_UNCAUGHT known-uncaught, ${#IMPROVED[@]} newly caught"

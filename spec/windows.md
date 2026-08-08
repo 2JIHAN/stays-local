@@ -32,7 +32,7 @@ For .NET assemblies, no reference to `System.Net`, `System.Net.Http`, `System.Ne
 
 Same rule as every platform. `ShellExecute` to the user's browser is the legitimate case.
 
-### 5. Sockets while running — recorded
+### 5. Sockets while running — conditional
 
 Launch the app and poll `Get-NetTCPConnection -OwningProcess <pid>` and `Get-NetUDPEndpoint` for 20 seconds. Zero entries.
 

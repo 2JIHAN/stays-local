@@ -28,7 +28,7 @@ Swift name mangling makes this fiddlier than on macOS — `nm -u` output has to 
 
 Same rule as every platform. `UIApplication.open` handing a URL to Safari is the legitimate case.
 
-### 4. Sockets while running — recorded
+### 4. Sockets while running — conditional
 
 Boot a simulator, install, launch, and observe. `lsof` against the simulator's app process works; a network link conditioner or a proxy that fails closed is a stronger variant worth considering.
 

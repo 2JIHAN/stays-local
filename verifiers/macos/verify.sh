@@ -89,20 +89,26 @@ APP="$OUT/$BUNDLE"
 [ -d "$APP" ] || die "build produced no bundle at $BUNDLE"
 info "$BUNDLE"
 
-# Every Mach-O in the bundle, not just the main executable. A clean main
-# binary with a chatty helper or XPC service must not pass.
+# Every Mach-O in the bundle, not just the main executable: a clean main binary
+# with a chatty helper or XPC service must not pass. Ask `file` about every
+# regular file rather than filtering on the execute bit or a .dylib name --
+# a Mach-O shipped mode 0644 as .node or .jnilib is loadable code, and both
+# are common in real software.
 MACHOS=()
 while IFS= read -r f; do
     file -b "$f" 2>/dev/null | grep -q "Mach-O" && MACHOS+=("$f")
-done < <(find "$APP" -type f \( -perm +111 -o -name "*.dylib" \) 2>/dev/null | sort -u)
+done < <(find "$APP" -type f 2>/dev/null | sort -u)
 [ "${#MACHOS[@]}" -gt 0 ] || die "no Mach-O files in the bundle — nothing to verify"
 info "${#MACHOS[@]} Mach-O file(s)"
 
 # ─────────────────────────────────────────────────────────────
 echo
 echo "1. Linked frameworks (required)"
-# The load-bearing check. Source greps can be worked around, but reaching the
-# network cannot be done without linking these, and that shows up in otool -L.
+# Corroborating, not decisive -- see proposals/0001. Foundation exports
+# NSURLSession directly and keeps CFNetwork as a delay-init dependency, so a
+# binary can use URLSession and link no CFNetwork at all; AltTab, AlDente and
+# Sparkle all do. Layer 2 is what catches that class. A CFNetwork load command
+# is still real evidence, so this stays required.
 HITS=""
 for m in "${MACHOS[@]}"; do
     L=$(otool -L "$m" 2>/dev/null | grep -iE "CFNetwork|/Network\.framework|libnetwork")
@@ -113,6 +119,8 @@ done
 
 echo
 echo "2. Referenced symbols (required)"
+# The load-bearing check. Whatever a binary does or does not link, using the
+# network means naming these symbols, and the name survives into the Mach-O.
 HITS=""
 for m in "${MACHOS[@]}"; do
     S=$(nm -u "$m" 2>/dev/null | grep -iE "urlsession|nwconnection|cfsocket|cfstream|getaddrinfo|nsurlconnection|_connect\$|_socket\$")
@@ -141,12 +149,15 @@ fi
 # ─────────────────────────────────────────────────────────────
 if [ "$RUNTIME" -eq 1 ]; then
     echo
-    echo "4. Sockets while running (recorded)"
+    echo "4. Sockets while running (conditional)"
     EXEC_NAME=$(defaults read "$APP/Contents/Info.plist" CFBundleExecutable 2>/dev/null)
     pkill -x "$EXEC_NAME" 2>/dev/null; sleep 1
     open -a "$APP" 2>/dev/null; sleep 3
     PID=$(pgrep -x "$EXEC_NAME" | head -1)
     if [ -z "$PID" ]; then
+        # conditional: required when it can run, skipped and noted when it
+        # cannot. An app holding an open socket has failed the only claim this
+        # badge makes, so when the layer does run it decides.
         info "app did not start — skipping this layer (headless environment?)"
         NOTES+=("SKIP: runtime layer")
     else

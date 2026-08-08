@@ -80,12 +80,12 @@
 <table>
   <tr><th>Platform</th><th>Status</th><th>What the badge rests on</th></tr>
   <tr><td><strong>Android</strong></td><td>certifying apps</td><td>The OS refuses sockets without <code>INTERNET</code></td></tr>
-  <tr><td><strong>macOS</strong></td><td>certifying apps</td><td>Nothing in the bundle links <code>CFNetwork</code></td></tr>
+  <tr><td><strong>macOS</strong></td><td>certifying apps</td><td>No binary in the bundle names <code>URLSession</code>, sockets, …</td></tr>
   <tr><td><strong>Windows</strong></td><td>spec drafted, verifier wanted</td><td>No PE imports <code>WS2_32</code>, <code>WINHTTP</code>, …</td></tr>
   <tr><td><strong>iOS</strong></td><td>spec drafted, verifier wanted</td><td>Symbol references — linkage proves little here</td></tr>
 </table>
 
-<p>The badges are not interchangeable and the spec says so. Android's is the strongest available: without the <code>INTERNET</code> permission the kernel refuses the socket, so the property is <em>enforced</em> rather than inferred. macOS is inferred from linkage. iOS is the weakest, because <code>UIKit</code> drags <code>CFNetwork</code> into every app and the linkage check loses its teeth.</p>
+<p>The badges are not interchangeable and the spec says so. Android's is the strongest available: without the <code>INTERNET</code> permission the kernel refuses the socket, so the property is <em>enforced</em> rather than inferred. macOS is inferred from the symbols a binary names. iOS is the weakest, because <code>UIKit</code> drags <code>CFNetwork</code> into every app and the linkage check loses its teeth.</p>
 
 <h2>What passing means</h2>
 

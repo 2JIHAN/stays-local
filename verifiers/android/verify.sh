@@ -220,7 +220,7 @@ fi
 # ─────────────────────────────────────────────────────────────
 if [ "$RUNTIME" -eq 1 ]; then
     echo
-    echo "4. Sockets while running (recorded)"
+    echo "4. Sockets while running (conditional)"
     if ! command -v adb >/dev/null 2>&1 || ! adb devices 2>/dev/null | grep -q "device$"; then
         info "no emulator attached — skipping this layer"
         NOTES+=("SKIP: runtime layer")

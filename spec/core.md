@@ -76,10 +76,11 @@ Each layer in a platform spec is one of:
 | Status | Meaning |
 |---|---|
 | **required** | Failing it fails the certification |
+| **conditional** | Required when the layer can run; skipped and noted when it cannot |
 | **recorded** | Result is published on the registry entry but does not decide the verdict |
 | **informational** | Reported to help review; never affects the verdict |
 
-A layer is `recorded` rather than `required` when it cannot run everywhere — the runtime layers usually fall here, because headless CI cannot always launch a GUI app.
+The runtime layers are `conditional`: an app holding an open socket has failed the only claim this badge makes, so when the layer runs it decides — but headless CI cannot always launch a GUI app, and a layer that did not run must not be mistaken for one that passed. The registry entry records `SKIP` when it did not run, so a reader can tell which happened. See [`proposals/0001`](../proposals/0001-layer-statuses.md).
 
 ## Certification process
 

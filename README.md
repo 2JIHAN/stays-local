@@ -27,12 +27,12 @@ Plenty of apps say they work locally. Nothing checks. `stays local` is the check
 
 | Platform | Spec | Verifier | Evidence it rests on |
 |---|---|---|---|
-| **macOS** | [stable](spec/macos.md) | [done](verifiers/macos/verify.sh) | Nothing in the bundle links `CFNetwork` |
+| **macOS** | [stable](spec/macos.md) | [done](verifiers/macos/verify.sh) | No binary in the bundle names `URLSession`, sockets, … |
 | **Android** | [stable](spec/android.md) | [done](verifiers/android/verify.sh) | The OS refuses sockets without `INTERNET` |
 | **Windows** | [draft](spec/windows.md) | [wanted](https://github.com/2JIHAN/stays-local/labels/verifier) | No PE imports `WS2_32`, `WINHTTP`, … |
 | **iOS** | [draft](spec/ios.md) | [wanted](https://github.com/2JIHAN/stays-local/labels/verifier) | Symbol references — linkage proves little here |
 
-Platforms are not interchangeable, and the badge should not pretend otherwise. Android's badge is the strongest available: without the `INTERNET` permission the kernel refuses the socket, so the property is *enforced* rather than inferred. macOS is inferred from linkage. iOS is the weakest, because `UIKit` drags `CFNetwork` in on every app and the linkage check loses its teeth.
+Platforms are not interchangeable, and the badge should not pretend otherwise. Android's badge is the strongest available: without the `INTERNET` permission the kernel refuses the socket, so the property is *enforced* rather than inferred. macOS is inferred from the symbols a binary names. iOS is the weakest, because `UIKit` drags `CFNetwork` in on every app and the linkage check loses its teeth.
 
 ## Registry
 
@@ -46,7 +46,9 @@ Platforms are not interchangeable, and the badge should not pretend otherwise. A
 
 **The app's shipped code contains no way to reach the network.** That is the whole claim, and it is narrow on purpose, because it is the part that can actually be checked.
 
-Each platform defines its own layers; see its spec. Layers are `required` (failing fails the badge) or `recorded` (published, but does not decide the verdict — usually because it cannot run everywhere).
+Each platform defines its own layers; see its spec. A layer is `required` (failing fails the badge), `conditional` (required when it can run, skipped and noted when it cannot — the runtime layers), or `recorded` (published but not decisive).
+
+On macOS the load-bearing layer is the symbol scan, not the linkage check. Naming `URLSession` or a socket call leaves the name in the Mach-O; linking `CFNetwork` does not reliably happen, because `Foundation` exports `NSURLSession` itself. That correction is written up in [`proposals/0001`](proposals/0001-layer-statuses.md).
 
 ## What it does not mean
 

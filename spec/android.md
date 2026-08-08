@@ -4,7 +4,7 @@
 
 Read `spec/core.md` first — the claim, the gaps, and the manifest live there.
 
-Android is the strongest platform this scheme covers. On macOS we infer "cannot reach the network" from what the binary links. On Android the operating system enforces it: without `android.permission.INTERNET`, `socket()` returns `EACCES`. The badge stops being an inference and becomes a statement about a sandbox the OS applies.
+Android is the strongest platform this scheme covers. On macOS we infer "cannot reach the network" from the symbols a binary names. On Android the operating system enforces it: without `android.permission.INTERNET`, `socket()` returns `EACCES`. The badge stops being an inference and becomes a statement about a sandbox the OS applies.
 
 ## Subject
 
@@ -67,11 +67,11 @@ Same rule as every platform, but Android keeps strings in four places with three
 
 Toolchain noise must be excluded or the layer is unusable: every `AndroidManifest.xml` contains `schemas.android.com`, and every NDK-built `.so` carries `android.googlesource.com` in `.comment`. The verifier keeps that exclusion list in one named constant, so what is being ignored is reviewable rather than scattered through the code.
 
-### 4. Sockets while running — recorded
+### 4. Sockets while running — conditional
 
 Install on an emulator, exercise the app, and read `/proc/net/tcp` and `/proc/net/tcp6` filtered to the app's UID. Zero entries.
 
-Recorded rather than required because the emulator is the part that flakes.
+Conditional: when the emulator runs, this layer decides. The emulator is the part that flakes, so a run without one records a skip rather than a pass.
 
 ## Toolchain
 
