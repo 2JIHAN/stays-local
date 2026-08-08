@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://2jihan.github.io/stays-local/">
 <meta property="og:image" content="https://2jihan.github.io/stays-local/social.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230e9f6e' fill-rule='evenodd' d='M7 18.4h10.4a4.3 4.3 0 0 0 .5-8.5 6.2 6.2 0 0 0-11.6-2.5A4.7 4.7 0 0 0 7 18.4Z M7.6 16.3h9.5a2.4 2.4 0 0 0 .3-4.8 4.3 4.3 0 0 0-8-1.7A2.8 2.8 0 0 0 7.6 16.3Z M2.7 20.2 19.6 2.8l1.6 1.6L4.3 21.8Z'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cg%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%2010h-1.26A8%208%200%201%200%209%2020h9a5%205%200%200%200%200-10z%22%20stroke%3D%22%230e9f6e%22%20stroke-width%3D%222%22/%3E%3Cline%20x1%3D%224%22%20y1%3D%224%22%20x2%3D%2220%22%20y2%3D%2220%22%20stroke%3D%22%230d1117%22%20stroke-width%3D%225.2%22/%3E%3Cline%20x1%3D%224%22%20y1%3D%224%22%20x2%3D%2220%22%20y2%3D%2220%22%20stroke%3D%22%230e9f6e%22%20stroke-width%3D%222%22/%3E%3C/g%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #ffffff; --fg: #1a1d21; --muted: #5b6572; --line: #e4e7eb;
@@ -79,13 +79,13 @@
 
 <table>
   <tr><th>Platform</th><th>Status</th><th>What the badge rests on</th></tr>
+  <tr><td><strong>Android</strong></td><td>certifying apps</td><td>The OS refuses sockets without <code>INTERNET</code></td></tr>
   <tr><td><strong>macOS</strong></td><td>certifying apps</td><td>Nothing in the bundle links <code>CFNetwork</code></td></tr>
-  <tr><td><strong>Android</strong></td><td>spec drafted, verifier wanted</td><td>The OS refuses sockets without <code>INTERNET</code></td></tr>
   <tr><td><strong>Windows</strong></td><td>spec drafted, verifier wanted</td><td>No PE imports <code>WS2_32</code>, <code>WINHTTP</code>, …</td></tr>
   <tr><td><strong>iOS</strong></td><td>spec drafted, verifier wanted</td><td>Symbol references — linkage proves little here</td></tr>
 </table>
 
-<p>The badges are not interchangeable and the spec says so. Android's is the strongest available, because the kernel enforces the property instead of us inferring it. iOS is the weakest, because <code>UIKit</code> drags <code>CFNetwork</code> into every app and the linkage check loses its teeth.</p>
+<p>The badges are not interchangeable and the spec says so. Android's is the strongest available: without the <code>INTERNET</code> permission the kernel refuses the socket, so the property is <em>enforced</em> rather than inferred. macOS is inferred from linkage. iOS is the weakest, because <code>UIKit</code> drags <code>CFNetwork</code> into every app and the linkage check loses its teeth.</p>
 
 <h2>What passing means</h2>
 
@@ -132,13 +132,12 @@
 
 <h2>Help wanted</h2>
 
-<p>Three platforms need a verifier, and landing one makes you its maintainer. Android is the most valuable, because it is the only platform where the operating system enforces the property instead of us inferring it.</p>
+<p>Windows and iOS need a verifier, and landing one makes you its maintainer. The specs are drafted with their open design questions written down, so you can argue with them before writing code.</p>
 
 <div class="cta" style="justify-content:flex-start">
-  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/1">Android</a>
-  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/2">Windows</a>
-  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/3">iOS</a>
-  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/5">Good first issue</a>
+  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/2">Windows verifier</a>
+  <a class="btn" href="https://github.com/2JIHAN/stays-local/issues/3">iOS verifier</a>
+  <a class="btn" href="https://github.com/2JIHAN/stays-local/labels/known-gap">Known gaps</a>
 </div>
 
 </main>

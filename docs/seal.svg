@@ -1,20 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112" role="img" aria-label="stays local — no egress, verified">
   <title>stays local — no egress, verified</title>
   <defs>
-    <path id="top" d="M 14,56 A 42,42 0 0 1 98,56"/>
-    <path id="bottom" d="M 18,56 A 38,38 0 0 0 94,56"/>
+    <!-- Text baselines sit well inside the green ring: at font-size 9 the caps
+         reach about r+6.5, so r=37 keeps them clear of the inner ring at 46.5. -->
+    <path id="arc-top" d="M 19,56 A 37,37 0 0 1 93,56"/>
+    <path id="arc-bottom" d="M 16,56 A 40,40 0 0 0 96,56"/>
   </defs>
+
   <circle cx="56" cy="56" r="55" fill="#151a21"/>
   <circle cx="56" cy="56" r="50" fill="none" stroke="#0e9f6e" stroke-width="1.5"/>
   <circle cx="56" cy="56" r="46.5" fill="none" stroke="#0e9f6e" stroke-width=".7" opacity=".45"/>
-  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="9" font-weight="bold" letter-spacing="2.4" fill="#e6edf3">
-    <textPath href="#top" startOffset="50%" text-anchor="middle">STAYS LOCAL</textPath>
+
+  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="9" font-weight="bold"
+        letter-spacing="2.2" fill="#e6edf3">
+    <textPath href="#arc-top" startOffset="50%" text-anchor="middle">STAYS LOCAL</textPath>
   </text>
-  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="7" letter-spacing="1.7" fill="#0e9f6e">
-    <textPath href="#bottom" startOffset="50%" text-anchor="middle">NO EGRESS · VERIFIED</textPath>
+  <text font-family="Verdana,DejaVu Sans,sans-serif" font-size="7" letter-spacing="1.6" fill="#0e9f6e">
+    <textPath href="#arc-bottom" startOffset="50%" text-anchor="middle">NO EGRESS · VERIFIED</textPath>
   </text>
-  <g transform="translate(56,55)" fill="none" stroke="#e6edf3" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M-12 7h20a8 8 0 0 0 .6-16 11.6 11.6 0 0 0-20.8-4.2A9 9 0 0 0-14 5z"/>
-    <path d="M-16 12 17-13"/>
-  </g>
+
+  <!-- Cloud geometry from Feather's `cloud` icon. The slash is knocked out of
+       it with a wider stroke in the seal's own background colour, then drawn:
+       the cloud stays a well-formed cloud rather than being interrupted
+       mid-curve, which is what a partial path looks like at this size. -->
+  <svg x="35" y="35" width="42" height="42" viewBox="0 0 24 24">
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" stroke="#e6edf3" stroke-width="2"/>
+      <line x1="4" y1="4" x2="20" y2="20" stroke="#151a21" stroke-width="5.2"/>
+      <line x1="4" y1="4" x2="20" y2="20" stroke="#e6edf3" stroke-width="2"/>
+    </g>
+  </svg>
 </svg>
