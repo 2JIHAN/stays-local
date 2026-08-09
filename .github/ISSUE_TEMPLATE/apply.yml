@@ -15,7 +15,7 @@ body:
     attributes:
       label: Platform
       description: Only platforms with a verifier can be certified today.
-      options: ["macos", "android (no verifier yet)", "windows (no verifier yet)", "ios (no verifier yet)"]
+      options: ["macos", "android", "windows (no verifier yet)", "ios (no verifier yet)"]
     validations: { required: true }
   - type: checkboxes
     id: ready

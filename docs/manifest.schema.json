@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://2jihan.github.io/stays-local/manifest.schema.json",
+  "title": "stays-local.json",
+  "description": "Declares how to build an app and what remote addresses it contains, so the stays local check can be run against it. See spec/core.md.",
+  "type": "object",
+  "required": ["name", "platform", "repository", "build", "bundle", "declared_urls"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name on the registry."
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["macos", "ios", "android", "windows"],
+      "description": "Selects the verifier. Only platforms with an implemented verifier can be certified today."
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "description": "Public source. Required — a closed-source app cannot be certified."
+    },
+    "build": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Command that builds the artifact into $STAYS_LOCAL_OUT. Must need no secrets and must not require network access it cannot do without."
+    },
+    "bundle": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Artifact name inside $STAYS_LOCAL_OUT, e.g. \"My App.app\" or \"app-release.apk\"."
+    },
+    "declared_urls": {
+      "type": "array",
+      "description": "Every remote address that appears in the artifact, each with a reason. Declaring is disclosure, not exemption: declared addresses are published on the registry entry. An empty array is the strongest position.",
+      "items": {
+        "type": "object",
+        "required": ["url", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9.-]+$",
+            "description": "Host only, no scheme and no path, e.g. \"store.steampowered.com\"."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "description": "Why the address is in the binary and what touches it. \"Opened in the user's browser; the app never connects\" is the common legitimate case."
+          }
+        }
+      }
+    }
+  }
+}

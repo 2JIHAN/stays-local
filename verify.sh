@@ -6,8 +6,9 @@
 # Reads <subject-dir>/stays-local.json, and hands off to the verifier for the
 # platform it declares. Each platform defines its own layers, because what
 # counts as evidence differs: on Android the OS enforces the absence of the
-# INTERNET permission, while on macOS the strongest signal is what the binary
-# links. See spec/ for the definition of each.
+# INTERNET permission, while on macOS it is inferred from the symbols a binary
+# names. See spec/ for the definition of each, and proposals/0001 for why
+# linkage is not the macOS signal it was once described as.
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -33,12 +34,16 @@ if [ ! -x "$VERIFIER" ]; then
     echo
     echo "Implemented:"
     for d in "$HERE"/verifiers/*/; do
-        [ -x "$d/verify.sh" ] && echo "  $(basename "$d")"
+        p=$(basename "$d")
+        [ "$p" = "_shared" ] && continue          # code the verifiers share, not a platform
+        [ -x "$d/verify.sh" ] && echo "  $p"
     done
     echo
-    echo "Wanted:"
+    echo "Wanted — landing one makes you that platform's maintainer:"
     for d in "$HERE"/verifiers/*/; do
-        [ -x "$d/verify.sh" ] || echo "  $(basename "$d") — see verifiers/$(basename "$d")/README.md and spec/$(basename "$d").md"
+        p=$(basename "$d")
+        [ "$p" = "_shared" ] && continue
+        [ -x "$d/verify.sh" ] || echo "  $p — see verifiers/$p/README.md and spec/$p.md"
     done
     exit 1
 fi
