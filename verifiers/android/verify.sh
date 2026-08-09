@@ -10,6 +10,7 @@ set -uo pipefail
 
 SUBJECT="${1:-.}"; shift 2>/dev/null
 RUNTIME=0
+PREBUILT=""
 JSON_OUT=""
 BADGE_OUT=""
 while [ $# -gt 0 ]; do
@@ -32,6 +33,24 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 EMIT="$HERE/../_shared/emit.py"
 DEXREFS="$HERE/dexrefs.py"
 
+# The applicant's build command is eval'd below, and it runs with the same
+# privileges as this script. Nothing stops it from rewriting the code that
+# produces the verdict -- so a build that overwrote emit.py could make the
+# verifier report PASS on an app it had just failed. Fingerprint everything
+# that decides a verdict before the build runs, and refuse to emit if any of
+# it changed. This is not a sandbox; it is a tripwire, and it turns a silent
+# forgery into a loud failure.
+fingerprint() {
+    find "$TOOLING" -type f \( -name '*.sh' -o -name '*.py' \) -exec shasum -a 256 {} + \
+        2>/dev/null | awk '{print $1}' | sort | shasum -a 256 | awk '{print $1}'
+}
+TOOLING="$(cd "$(dirname "$0")/.." && pwd)"
+TOOLING_BEFORE=$(fingerprint)
+
+# Tools are called by name. A build that drops an `nm` or `otool` earlier on
+# PATH would be answering the questions asked about it, so ask the system ones.
+PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 fail() { echo "  FAIL  $1"; NOTES+=("FAIL: $1"); FAILED=1; }
 pass() { echo "  PASS  $1"; NOTES+=("PASS: $1"); }
 note() { echo "  note  $1"; NOTES+=("NOTE: $1"); }
@@ -39,6 +58,13 @@ info() { echo "        $1"; }
 
 emit() {
     [ -n "$JSON_OUT$BADGE_OUT" ] || return 0
+    # Refuse to speak for a verifier that changed while it was running.
+    if [ "$(fingerprint)" != "$TOOLING_BEFORE" ]; then
+        echo "  FAIL  the verifier's own code changed during this run — refusing to emit a verdict"
+        echo "        (the build command can reach it; see spec/core.md)"
+        rm -f "$JSON_OUT" "$BADGE_OUT" 2>/dev/null
+        exit 2
+    fi
     python3 "$EMIT" "${JSON_OUT:--}" "${BADGE_OUT:--}" "$NAME" "$PLATFORM" "$SPEC" "$FAILED" \
         "${DECLARED_JSON:-[]}" ${NOTES[@]+"${NOTES[@]}"}
     [ -n "$JSON_OUT" ] && echo "     wrote $JSON_OUT"
@@ -101,8 +127,16 @@ echo
 # ─────────────────────────────────────────────────────────────
 echo "Build"
 OUT="$(mktemp -d)"
-export STAYS_LOCAL_OUT="$OUT"
-( cd "$SUBJECT" && eval "$BUILD_CMD" ) >/dev/null 2>&1 || die "build failed: $BUILD_CMD"
+if [ -n "$PREBUILT" ]; then
+    # The artifact was produced elsewhere -- in CI, by a job that has none of
+    # this code present to tamper with. Nothing the applicant controls has run
+    # in this process.
+    cp -R "$PREBUILT"/* "$OUT"/ 2>/dev/null || die "cannot read the prebuilt artifact at $PREBUILT"
+    info "using a prebuilt artifact"
+else
+    export STAYS_LOCAL_OUT="$OUT"
+    ( cd "$SUBJECT" && eval "$BUILD_CMD" ) >/dev/null 2>&1 || die "build failed: $BUILD_CMD"
+fi
 APK="$OUT/$BUNDLE"
 [ -f "$APK" ] || die "build produced no APK at $BUNDLE"
 info "$BUNDLE  ($(wc -c < "$APK" | tr -d ' ') bytes)"

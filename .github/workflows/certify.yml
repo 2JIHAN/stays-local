@@ -25,13 +25,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Split in two on purpose. Certifying means building an applicant's arbitrary
-  # code, so that build must never run in a job that holds a token able to write
-  # this repository — otherwise a malicious applicant could certify themselves
-  # by pushing rather than by passing. This job has read-only permissions and
-  # no credentials left in the workspace; it hands its verdict over as an
-  # artifact, and only the job below can write.
+  # Three jobs, and the split matters more than it looks.
+  #
+  # This one runs the applicant's build command, which is arbitrary code. It
+  # therefore holds no token that can write this repository AND none of the
+  # verifier's own code is present in its workspace — because a build that can
+  # overwrite the program which writes the verdict can simply write "verified"
+  # over its own failure. Containing the token was necessary and not
+  # sufficient; the applicant must also not be able to author the answer.
+  build:
+    runs-on: ${{ inputs.platform == 'android' && 'ubuntu-latest' || 'macos-15' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - name: Build the artifact
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          export STAYS_LOCAL_OUT="$RUNNER_TEMP/out"
+          eval "$(python3 -c "import json;print(json.load(open('stays-local.json'))['build'])")"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ inputs.slug }}
+          path: ${{ runner.temp }}/out
+          include-hidden-files: true
+
+  # Inspects what the build produced. Nothing the applicant controls runs here
+  # except the app itself, during the runtime layer — and the verifier
+  # fingerprints its own code before and after, so tampering during that window
+  # aborts instead of producing a verdict.
   verify:
+    needs: build
     runs-on: ${{ inputs.platform == 'android' && 'ubuntu-latest' || 'macos-15' }}
     permissions:
       contents: read
@@ -45,34 +73,28 @@ jobs:
           ref: ${{ inputs.ref }}
           path: subject
           persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact-${{ inputs.slug }}
+          path: prebuilt
 
-      # A failing verdict is a result to record, not a reason to stop. Without
-      # this, certification could only ever promote: a re-certification that
-      # now fails would abort before recording, leaving the old green badge in
-      # place while nothing in the repo could turn it red.
       - name: Verify
-        run: ./verify.sh subject --runtime --json "verdict.json" --badge "verdict.svg" || true
+        run: ./verify.sh subject --runtime --prebuilt prebuilt --json verdict.json --badge verdict.svg || true
 
       - name: Attach the run to the verdict
         if: always()
         run: |
           python3 - <<'PY'
-          import json
+          import json, os
           d = json.load(open("verdict.json"))
           d["repository"] = "https://github.com/${{ inputs.repository }}"
           d["run"] = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           json.dump(d, open("verdict.json", "w"), indent=2, ensure_ascii=False)
-          print(f"### {d['name']} — **{d['message']}**\n")
-          for n in d.get("notes", []):
-              print(f"- {n}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(f"### {d['name']} — **{d['message']}**\n\n")
+              for n in d.get("notes", []):
+                  f.write(f"- {n}\n")
           PY
-          python3 -c "
-          import json,os
-          d=json.load(open('verdict.json'))
-          open(os.environ['GITHUB_STEP_SUMMARY'],'a').write(
-              f\"### {d['name']} — **{d['message']}**\n\n\" +
-              ''.join(f'- {n}\n' for n in d.get('notes', [])))
-          "
 
       - uses: actions/upload-artifact@v4
         if: always()
