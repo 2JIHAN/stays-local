@@ -39,7 +39,7 @@ Platforms are not interchangeable, and the badge should not pretend otherwise. A
 <!-- registry:start -->
 | App | Platform | Last verified | Badge | Declared addresses | |
 |---|---|---|---|---|---|
-| [Steam Shelf](https://github.com/2JIHAN/steam-shelf) | macos | [2026-08-09](https://github.com/2JIHAN/stays-local/actions/runs/31288547264) | ![](badges/steam-shelf.svg) | `store.steampowered.com` — Handed to the user's browser by NSWorkspace when they pick Open Store Page from the context menu. The app itself never connects. | ⚠︎ steward's own app |
+| [Steam Shelf](https://github.com/2JIHAN/steam-shelf) | macos | [2026-08-09](https://github.com/2JIHAN/stays-local/actions/runs/31289260139) | ![](badges/steam-shelf.svg) | `store.steampowered.com` — Handed to the user's browser by NSWorkspace when they pick Open Store Page from the context menu. The app itself never connects. | ⚠︎ steward's own app |
 <!-- registry:end -->
 
 ⚠︎ marks an app submitted by a maintainer. [Governance](GOVERNANCE.md#conflicts-of-interest) requires the relationship to be visible; a maintainer cannot approve their own certification, and the run decides regardless.

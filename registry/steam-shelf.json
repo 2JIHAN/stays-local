@@ -18,8 +18,8 @@
     "PASS: no CFNetwork or Network.framework",
     "PASS: no networking symbols referenced",
     "PASS: every remote address is declared [store.steampowered.com]",
-    "PASS: no sockets over a 20-second run"
+    "SKIP: runtime layer"
   ],
   "repository": "https://github.com/2JIHAN/steam-shelf",
-  "run": "https://github.com/2JIHAN/stays-local/actions/runs/31288547264"
+  "run": "https://github.com/2JIHAN/stays-local/actions/runs/31289260139"
 }
