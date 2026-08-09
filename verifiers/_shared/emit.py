@@ -7,6 +7,10 @@ badge means the same thing and looks the same whatever produced it.
     emit.py <json_out|-> <badge_out|-> <name> <platform> <spec> <failed> \
             <declared_json> [note ...]
 
+The badge carries the date it was produced. A badge that cannot go stale
+silently is worth more than one that implies it is checked continuously: a
+reader can see for themselves how old the claim is.
+
 `declared_json` is the manifest's declared_urls array, verbatim, as JSON. It is
 published on the registry entry because disclosure is the only mitigation the
 scheme has for data smuggled through a declared URL — see spec/core.md. Pass
@@ -15,6 +19,7 @@ scheme has for data smuggled through a declared URL — see spec/core.md. Pass
 `failed` is "0" for a pass and anything else for a fail. Pass "-" for an
 output you do not want written.
 """
+import datetime
 import json
 import sys
 
@@ -76,7 +81,8 @@ def main() -> None:
     except json.JSONDecodeError:
         declared = []
     ok = failed == "0"
-    message = "verified" if ok else "failed"
+    today = datetime.date.today().isoformat()
+    message = f"verified {today}" if ok else f"failed {today}"
     color = PASS_COLOR if ok else FAIL_COLOR
 
     if json_out and json_out != "-":
@@ -90,6 +96,7 @@ def main() -> None:
                 "name": name,
                 "platform": platform,
                 "spec": spec,
+                "verified_on": today,
                 # Every remote address the artifact contains, with the reason
                 # given for it. spec/core.md calls this the only mitigation for
                 # the declared-URL gap, so it has to be on the entry rather

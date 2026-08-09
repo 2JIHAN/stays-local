@@ -21,8 +21,8 @@ def rows() -> str:
     if own_path.exists():
         ownership = json.loads(own_path.read_text())
 
-    out = ["| App | Platform | Badge | Declared addresses | |",
-           "|---|---|---|---|---|"]
+    out = ["| App | Platform | Last verified | Badge | Declared addresses | |",
+           "|---|---|---|---|---|---|"]
     for f in sorted(pathlib.Path("registry").glob("*.json")):
         if f.name == "ownership.json":
             continue
@@ -33,8 +33,11 @@ def rows() -> str:
         else:
             cell = "*none*"
         mark = "⚠︎ steward's own app" if ownership.get(f.stem, {}).get("maintainer_owned") else ""
+        run = d.get("run", "")
+        when = d.get("verified_on", "—")
+        when = f"[{when}]({run})" if run else when
         out.append(
-            f"| [{d['name']}]({d['repository']}) | {d.get('platform', '?')} "
+            f"| [{d['name']}]({d['repository']}) | {d.get('platform', '?')} | {when} "
             f"| ![]({'badges/' + f.stem + '.svg'}) | {cell} | {mark} |"
         )
     return "\n".join(out)
