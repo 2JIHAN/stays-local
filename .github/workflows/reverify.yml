@@ -1,8 +1,11 @@
 name: Re-verify the registry
 
+# Manual only, on purpose. This builds an applicant's current source, and doing
+# that on a timer means an app certified while benign can swap in a malicious
+# build later and have it executed automatically. Staleness is handled by the
+# date on the badge and by .github/workflows/staleness.yml, neither of which
+# runs anyone's code.
 on:
-  schedule:
-    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 concurrency:

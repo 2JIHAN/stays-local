@@ -87,7 +87,7 @@ The runtime layers are `conditional`: an app holding an open socket has failed t
 1. Applicant adds `stays-local.json` and opens an application issue.
 2. A maintainer triggers the certify workflow, which checks out the applicant's public source in this repository's CI and runs the verifier there. Applicants do not certify themselves.
 3. On pass, the run writes `registry/<slug>.json` and `badges/<slug>.svg`, and the run URL is recorded on the entry.
-4. Entries are re-verified weekly against the default branch. A failing re-verification regenerates the badge as `failed`.
+4. The badge and the entry carry the date they were earned. Re-verification is manual: a maintainer re-runs the check on request or when something looks wrong, and a failing re-verification regenerates the badge as `failed`. It is not scheduled, because building an applicant's current source on a timer executes code nobody chose to run that week.
 
 ## Disputes
 

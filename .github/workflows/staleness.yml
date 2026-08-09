@@ -1,0 +1,72 @@
+name: Staleness
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Deliberately does not re-verify anything. Re-verification builds an
+# applicant's code, and doing that automatically every week means an app that
+# was certified while benign can swap in a malicious build later and get it
+# executed on a schedule, with no human deciding to. The badge carries the date
+# it was earned, so a stale claim is visible without anyone having to run
+# anything; this job only points at the ones that have gone quiet.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - id: stale
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import datetime, json, pathlib
+
+          LIMIT_DAYS = 90
+          today = datetime.date.today()
+          rows = []
+          for f in sorted(pathlib.Path("registry").glob("*.json")):
+              if f.name == "ownership.json":
+                  continue
+              d = json.load(open(f))
+              on = d.get("verified_on")
+              if not on:
+                  rows.append((f.stem, "never", 10**6))
+                  continue
+              age = (today - datetime.date.fromisoformat(on)).days
+              if age > LIMIT_DAYS:
+                  rows.append((f.stem, on, age))
+
+          print(f"count={len(rows)}")
+          body = "\n".join(f"- `{slug}` — last verified {on} ({age} days ago)" for slug, on, age in rows)
+          print("body<<EOF")
+          print(body)
+          print("EOF")
+          PY
+
+      - name: Open an issue for the entries that have gone quiet
+        if: steps.stale.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Registry entries older than 90 days" \
+            --label "known-gap" \
+            --body "$(cat <<EOF
+          These badges still say verified, and nothing has checked them recently:
+
+          ${{ steps.stale.outputs.body }}
+
+          A badge carries the date it was earned, so none of this is hidden — but an entry
+          nobody has looked at in three months is worth a look.
+
+          Re-verify one by dispatching [Re-verify the registry](../../actions/workflows/reverify.yml).
+          That builds the app's current source, so it is a deliberate act rather than something
+          that happens on a timer.
+          EOF
+          )"

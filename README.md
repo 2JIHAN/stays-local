@@ -124,7 +124,11 @@ If you have a working bypass, read [SECURITY.md](SECURITY.md) before opening it 
 
 ## Staying honest
 
-Entries are re-verified weekly against the default branch. An entry that stops passing has its badge regenerated as `failed` — the badge you embed is the one this repository generates, so it cannot go on claiming something that stopped being true.
+The badge carries the date it was earned, and the registry entry links to the run that earned it. A claim about software that shows its own age cannot go quietly stale.
+
+Re-verification is deliberate rather than scheduled. Building an applicant's current source on a timer would mean an app certified while benign could swap in a malicious build later and have it executed automatically, every week, with nobody deciding to — a poor trade for a scheme whose own runner is the thing an attacker would most want. A maintainer re-runs the check on request or when something looks wrong, and a weekly job flags entries nobody has looked at in 90 days without building anything.
+
+The badge you embed is still the one this repository generates, so it cannot be edited into saying something the check did not.
 
 Closed-source apps cannot be certified. The check needs to build from public source, and a claim you cannot inspect is the thing this is meant to replace.
 
