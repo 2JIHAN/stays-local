@@ -46,6 +46,10 @@ Skipped and noted when the app does not start, which can happen in a headless en
 
 Requires macOS with the command line tools (`otool`, `nm`, `strings`, `lsof`).
 
+## Known misses
+
+Layer 2's symbol list is an enumeration, and an enumeration of networking APIs is never finished. Two ordinary, statically linked routes pass every layer today: linking `libcurl` directly, and calling `syscall(97, …)` for a raw socket ([#11](https://github.com/2JIHAN/stays-local/issues/11)). Neither needs dynamic loading. Anyone relying on a macOS badge should read that as the boundary it is.
+
 ## Bypasses this spec does not catch
 
 Tracked in `bypasses/macos/`. A verifier change that catches one of these is a welcome contribution; so is a new case.

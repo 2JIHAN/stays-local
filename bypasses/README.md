@@ -35,7 +35,9 @@ That asymmetry is deliberate. If adding a case nothing catches turned CI red, no
 | [macos/004](macos/004-declared-url-exfiltration/) | Data in a declared URL's query string | **uncaught** | Nothing. The [known gap](../spec/core.md#known-gaps) |
 | [macos/005](macos/005-xpc-helper/) | XPC to a helper with network access | **uncaught** | Nothing. The helper is outside the bundle |
 
-Read that table as the honest statement of what a macOS badge is worth: **three of five known bypasses currently succeed.** Two of the three are inherent to scanning one process's binary; the third is a gap in a layer we designed. Case 002 is worth singling out — it is caught only by the recorded layer, so on a runner where the app cannot launch, that bypass succeeds too.
+Two more were found by an adversarial review before the v0.3.0 announcement and are not in the table because nobody has written them as cases yet — [#11](https://github.com/2JIHAN/stays-local/issues/11): linking `libcurl` directly, and calling `syscall(97, …)` for a raw socket. Both pass every layer, and neither needs dynamic loading or any trickery. Writing them up as cases is a good contribution.
+
+Read the table as the honest statement of what a macOS badge is worth: **three of five written cases currently succeed, and at least two more mechanisms are known and uncaptured.** Two of the three are inherent to scanning one process's binary; the third is a gap in a layer we designed. Case 002 is worth singling out — it is caught only by the recorded layer, so on a runner where the app cannot launch, that bypass succeeds too.
 
 Fixtures never contact a real host. They target RFC 2606 `.invalid` / `example.com` names, or RFC 5737 `192.0.2.1`, which is reserved and routed nowhere. A catalogue of attacks that performs the attack on a third party would not be a test suite.
 
