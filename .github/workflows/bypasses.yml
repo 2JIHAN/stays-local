@@ -28,13 +28,38 @@ jobs:
       - name: The README's registry table must match the registry
         run: python3 tools/render-registry.py --check
 
-  self-test:
+  # A verifier that only ever fails things is not a verifier, and a corpus of
+  # bypasses cannot notice that on its own — everything would read as "caught".
+  # These two check the other direction: a clean app must come out PASS.
+  self-test-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # A verifier that only ever fails things is not a verifier. This is the
-      # other direction: an app with no networking must come out PASS.
-      - name: A clean app must pass
+      - name: A clean Android app must pass
         run: |
           cp verifiers/android/fixture/stays-local.json ./stays-local.json
           ./verify.sh .
+
+  self-test-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: 2JIHAN/steam-shelf
+          path: subject
+          persist-credentials: false
+      - name: A clean macOS app must pass
+        run: ARCHS=arm64 ./verify.sh subject
+
+  # The scheme's claim is that a run decides, not that a maintainer asserts.
+  # Without this, that was a social convention: the badge is a committed text
+  # file, and an entry edited by hand passed every other check in the repo.
+  registry-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every entry must agree with its badge and its run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check-registry.py

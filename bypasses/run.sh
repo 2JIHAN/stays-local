@@ -29,7 +29,10 @@ STATIC_ONLY=0
 [ "${1:-}" = "--static" ] && { RUNTIME_FLAG=""; STATIC_ONLY=1; PLATFORM=""; }
 REGRESSED=0
 UNDECLARED=0
+BROKEN=0
 RAN=0
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
 KNOWN_UNCAUGHT=0
 IMPROVED=()
 
@@ -48,15 +51,34 @@ for case_dir in "$HERE"/bypasses/*/*/; do
     expected=$(tr -d '[:space:]' < "$case_dir/expected")
     RAN=$((RAN + 1))
 
-    # The verifier exits 0 when the app passes — which, for a bypass, means
-    # the bypass worked.
+    # Read the verdict, not just the exit code. A verifier that has fallen over
+    # also exits non-zero, and treating that as "caught" would let a completely
+    # dead verifier report a clean sweep — turning the corpus from an integrity
+    # guarantee into a rubber stamp.
     cp "$case_dir/stays-local.json" "$HERE/stays-local.json"
-    if ( cd "$HERE" && ./verify.sh . $RUNTIME_FLAG >/dev/null 2>&1 ); then
-        actual="uncaught"
-    else
-        actual="caught"
-    fi
+    verdict="$WORKDIR/$plat-$name.json"
+    ( cd "$HERE" && ./verify.sh . $RUNTIME_FLAG --json "$verdict" >/dev/null 2>&1 )
+    rc=$?
     rm -f "$HERE/stays-local.json"
+
+    if [ ! -s "$verdict" ]; then
+        echo "  NO VERDICT  $plat/$name — the verifier produced no verdict file"
+        BROKEN=1
+        continue
+    fi
+    # A real verdict names the layers it ran. One that failed without checking
+    # anything has nothing to say about them.
+    layers=$(python3 -c "
+import json,sys
+d=json.load(open('$verdict'))
+print(len([n for n in d.get('notes',[]) if n.startswith(('PASS:','FAIL:','SKIP:'))]))
+" 2>/dev/null || echo 0)
+    if [ "$rc" -ne 0 ] && [ "$layers" -lt 2 ]; then
+        echo "  NO LAYERS   $plat/$name — the verifier failed without reporting layer results"
+        BROKEN=1
+        continue
+    fi
+    [ "$rc" -eq 0 ] && actual="uncaught" || actual="caught"
 
     if [ "$expected" = "caught" ] && [ "$actual" = "uncaught" ]; then
         if [ "$STATIC_ONLY" -eq 1 ]; then
@@ -95,6 +117,13 @@ if [ "$STATIC_ONLY" -eq 1 ]; then
     echo "judge a regression. Run without --static before trusting a green."
 fi
 
+if [ "$BROKEN" -ne 0 ]; then
+    echo
+    echo "The verifier did not report on the layers it was supposed to run. A"
+    echo "corpus cannot tell a caught bypass from a broken verifier by exit code"
+    echo "alone, so this is treated as a failure rather than a clean sweep."
+    exit 1
+fi
 if [ "$REGRESSED" -ne 0 ]; then
     echo
     echo "A case the verifier used to catch got through. That is a regression in"
