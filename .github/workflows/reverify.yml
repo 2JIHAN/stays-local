@@ -124,7 +124,7 @@ jobs:
               cp "$d/verdict.svg" "badges/$slug.svg"
             done
             python3 tools/render-registry.py
-            git add registry badges
+            git add registry badges README.md
             if git diff --cached --quiet; then
               echo "no change"
               exit 0

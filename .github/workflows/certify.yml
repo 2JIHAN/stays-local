@@ -110,7 +110,7 @@ jobs:
             cp verdict/verdict.json "registry/${{ inputs.slug }}.json"
             cp verdict/verdict.svg "badges/${{ inputs.slug }}.svg"
             python3 tools/render-registry.py
-            git add registry badges
+            git add registry badges README.md
             if git diff --cached --quiet; then
               echo "no change"
               exit 0
