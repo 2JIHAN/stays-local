@@ -67,7 +67,7 @@ On macOS the load-bearing layer is the symbol scan, not the linkage check. Namin
 
 It is one checkable property, not a privacy audit. Say so when you cite it.
 
-[`bypasses/`](bypasses/) is the public, executable catalogue of ways around it, and it does not flatter us: **three of five known macOS bypasses succeed today.** Two are inherent to scanning one process's binary — an app can shell out to `curl`, or hand data to a helper over XPC — and the third is the declared-URL gap. CI runs the corpus on every push, so a verifier that stops catching one goes red.
+[`bypasses/`](bypasses/) is the public, executable catalogue of ways around it, and it does not flatter us: **three of six written macOS cases still succeed.** Two are inherent to scanning one process's binary — an app can shell out to `curl`, or hand data to a helper over XPC — and the third is the declared-URL gap. CI runs the corpus on every push, so a verifier that stops catching one goes red.
 
 ## Apply
 

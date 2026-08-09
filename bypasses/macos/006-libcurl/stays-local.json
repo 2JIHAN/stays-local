@@ -1,0 +1,8 @@
+{
+  "name": "Bypass case 006 — libcurl",
+  "platform": "macos",
+  "repository": "https://github.com/2JIHAN/stays-local",
+  "build": "./bypasses/macos/006-libcurl/build.sh \"$STAYS_LOCAL_OUT\"",
+  "bundle": "Case006.app",
+  "declared_urls": []
+}

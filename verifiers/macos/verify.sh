@@ -50,6 +50,26 @@ TOOLING_BEFORE=$(fingerprint)
 # PATH would be answering the questions asked about it, so ask the system ones.
 PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
+# What counts as networking, in one place so it can be reviewed as a list
+# rather than found inside two greps.
+#
+# This is an enumeration, and an enumeration of ways to reach a network is
+# never finished. Anything not named here passes, which is why spec/macos.md
+# says so plainly instead of implying the list is complete.
+LINK_PATTERNS="CFNetwork|/Network\.framework|libnetwork|libcurl|libresolv|libssh|libldap"
+
+# Apple frameworks, the C library's socket calls, and the HTTP libraries macOS
+# ships. Anchored where a bare word would collide: `_connect` must not match
+# `_dbus_connect`, and `_bind` must not match a C++ `std::bind` thunk.
+SYMBOL_PATTERNS="urlsession|nwconnection|nsurlconnection|cfsocket|cfstream|cfnetwork"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|curl_easy_|curl_multi_|curl_global_|curl_share_"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(socket|socketpair|connect|bind|listen|accept|accept4)\$"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(send|sendto|sendmsg|recv|recvfrom|recvmsg)\$"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(getaddrinfo|gethostbyname|gethostbyname2|gethostbyaddr|getnameinfo)\$"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(inet_addr|inet_aton|inet_pton|inet_ntop)\$"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(res_query|res_search|res_9_query|res_9_search|__res_query)\$"
+SYMBOL_PATTERNS="$SYMBOL_PATTERNS|^_(setsockopt|getsockopt|getpeername|getsockname)\$"
+
 fail() { echo "  FAIL  $1"; NOTES+=("FAIL: $1"); FAILED=1; }
 pass() { echo "  PASS  $1"; NOTES+=("PASS: $1"); }
 info() { echo "        $1"; }
@@ -152,7 +172,7 @@ echo "1. Linked frameworks (required)"
 # is still real evidence, so this stays required.
 HITS=""
 for m in "${MACHOS[@]}"; do
-    L=$(otool -L "$m" 2>/dev/null | grep -iE "CFNetwork|/Network\.framework|libnetwork")
+    L=$(otool -L "$m" 2>/dev/null | grep -iE "$LINK_PATTERNS")
     [ -n "$L" ] && HITS="$HITS$(basename "$m"): $L"$'\n'
 done
 [ -n "$HITS" ] && { fail "networking frameworks are linked"; echo "$HITS" | sed 's/^/        /'; } \
@@ -164,7 +184,7 @@ echo "2. Referenced symbols (required)"
 # network means naming these symbols, and the name survives into the Mach-O.
 HITS=""
 for m in "${MACHOS[@]}"; do
-    S=$(nm -u "$m" 2>/dev/null | grep -iE "urlsession|nwconnection|cfsocket|cfstream|getaddrinfo|nsurlconnection|_connect\$|_socket\$")
+    S=$(nm -u "$m" 2>/dev/null | grep -iE "$SYMBOL_PATTERNS")
     [ -n "$S" ] && HITS="$HITS$(basename "$m"): $S"$'\n'
 done
 [ -n "$HITS" ] && { fail "networking symbols are referenced"; echo "$HITS" | sed 's/^/        /'; } \

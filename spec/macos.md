@@ -22,7 +22,11 @@ A CFNetwork load command is still real evidence and there is no reason to accept
 
 ### 2. Referenced symbols — required
 
-**The load-bearing layer.** No Mach-O references `URLSession`, `NWConnection`, `CFSocket`, `CFStream`, `NSURLConnection`, `getaddrinfo`, or the raw `connect`/`socket` syscalls, per `nm -u`.
+**The load-bearing layer.** No Mach-O references Apple's networking APIs (`URLSession`, `NWConnection`, `CFSocket`, `CFStream`, `NSURLConnection`), the HTTP client macOS ships in `/usr/lib` (`curl_easy_*`, `curl_multi_*`, `curl_global_*`), or the BSD socket and resolver calls (`socket`, `connect`, `bind`, `send*`, `recv*`, `getaddrinfo`, `gethostbyname*`, `inet_*`, `res_*`), per `nm -u`.
+
+Symbols are matched anchored, not as substrings: unanchored, `_connect` hits `_dbus_connect` and `_bind` hits C++ `std::bind` thunks, and a false positive accuses an honest author of something.
+
+**This layer is an enumeration, and an enumeration of ways to reach a network is never finished.** Anything not on the list passes — `libcurl` did until [`proposals/0002`](../proposals/0002-libcurl.md), and a raw `syscall(97, …)` still does. The full list lives at the top of the verifier so it can be read as a list rather than reconstructed from a grep.
 
 Whatever a binary does or does not link, using the network means naming one of these, and the name survives into the Mach-O where `nm` finds it.
 

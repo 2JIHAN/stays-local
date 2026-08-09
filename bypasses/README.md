@@ -34,10 +34,11 @@ That asymmetry is deliberate. If adding a case nothing catches turned CI red, no
 | [macos/003](macos/003-shell-out-curl/) | Shell out to `curl` via `Process` | **uncaught** | Nothing. The socket belongs to the child process |
 | [macos/004](macos/004-declared-url-exfiltration/) | Data in a declared URL's query string | **uncaught** | Nothing. The [known gap](../spec/core.md#known-gaps) |
 | [macos/005](macos/005-xpc-helper/) | XPC to a helper with network access | **uncaught** | Nothing. The helper is outside the bundle |
+| [macos/006](macos/006-libcurl/) | Link `libcurl` and call `curl_easy_perform` | **caught** | Layers 1 and 2, since [proposals/0002](../proposals/0002-libcurl.md) |
 
-Two more were found by an adversarial review before the v0.3.0 announcement and are not in the table because nobody has written them as cases yet — [#11](https://github.com/2JIHAN/stays-local/issues/11): linking `libcurl` directly, and calling `syscall(97, …)` for a raw socket. Both pass every layer, and neither needs dynamic loading or any trickery. Writing them up as cases is a good contribution.
+Read the table as the honest statement of what a macOS badge is worth: **three of six written cases still succeed.**
 
-Read the table as the honest statement of what a macOS badge is worth: **three of five written cases currently succeed, and at least two more mechanisms are known and uncaptured.** Two of the three are inherent to scanning one process's binary; the third is a gap in a layer we designed. Case 002 is worth singling out — it is caught only by the recorded layer, so on a runner where the app cannot launch, that bypass succeeds too.
+006 is what the corpus is for. An adversarial review found it days before the v0.3.0 announcement, it passed every required layer, and writing it as a case is what turned it into a fix — the layers had been written against the way a Cocoa app reaches the network and treated that as the only way. Its sibling from the same review, `syscall(97, …)` for a raw socket, is still uncaught and still open at [#11](https://github.com/2JIHAN/stays-local/issues/11); it needs a case too. Two of the three are inherent to scanning one process's binary; the third is a gap in a layer we designed. Case 002 is worth singling out — it is caught only by the recorded layer, so on a runner where the app cannot launch, that bypass succeeds too.
 
 Fixtures never contact a real host. They target RFC 2606 `.invalid` / `example.com` names, or RFC 5737 `192.0.2.1`, which is reserved and routed nowhere. A catalogue of attacks that performs the attack on a third party would not be a test suite.
 
